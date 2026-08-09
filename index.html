@@ -6,16 +6,33 @@
 
   <title>EuroCompra | Compras na Bélgica</title>
 
+  <meta
+    name="description"
+    content="EuroCompra - Compras na Bélgica, redirecionamento e Personal Shopper."
+  >
+
   <style>
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --azul: #063b9e;
+      --azul-escuro: #102044;
+      --amarelo: #f5b52e;
+      --amarelo-claro: #fff5d6;
+      --branco: #ffffff;
+      --cinza: #f5f7fb;
+      --borda: #d8e0f0;
     }
 
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: #102044;
-      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--azul-escuro);
+      background: var(--branco);
+      line-height: 1.6;
     }
 
     a {
@@ -23,108 +40,122 @@
     }
 
     .wrap {
-      width: 92%;
-      max-width: 1100px;
-      margin: auto;
+      width: min(1100px, 92%);
+      margin: 0 auto;
     }
 
     /* TOPO */
 
-    header {
+    .topbar {
       background: #fff;
-      border-bottom: 1px solid #e5eaf2;
+      border-bottom: 1px solid #e6eaf2;
+      padding: 10px 0;
     }
 
-    .top {
-      min-height: 45px;
+    .topbar-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 20px;
     }
 
-    .brand-small {
-      font-size: 16px;
-      font-weight: bold;
+    .top-brand {
+      font-weight: 800;
+      color: var(--azul-escuro);
+      font-size: 18px;
     }
 
     .email {
-      color: #0645ad;
+      color: var(--azul);
       font-weight: bold;
-      text-decoration: underline;
     }
 
-    /* LOGO */
+    /* HERO */
 
     .hero {
-      background: #f6f9fd;
+      background: linear-gradient(180deg, #f8faff 0%, #eef3fb 100%);
       text-align: center;
-      padding: 10px 0 35px;
+      padding: 30px 0 35px;
     }
 
-    .logo {
-      margin: 0;
+    .brand {
       font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(48px, 8vw, 72px);
-      color: #063b9e;
+      font-size: clamp(52px, 9vw, 78px);
+      font-weight: bold;
+      line-height: 1;
+      color: var(--azul);
     }
 
-    .logo span {
-      color: #f2a51a;
+    .brand span {
+      color: var(--amarelo);
     }
 
     .subtitle {
-      margin: 10px 0 20px;
+      margin-top: 12px;
       font-size: 18px;
-      font-weight: bold;
       letter-spacing: 5px;
+      font-weight: 800;
+      color: var(--azul-escuro);
     }
 
     .hero-message {
-      max-width: 680px;
-      margin: auto;
-      padding: 13px 20px;
+      width: min(680px, 92%);
+      margin: 25px auto 0;
+      background: var(--azul);
+      color: #fff;
       border-radius: 15px;
-      background: #063b9e;
-      color: white;
+      padding: 12px 20px;
       font-weight: bold;
       font-size: 17px;
     }
 
-    .hero-message span {
-      color: #ffc400;
+    .hero-message strong {
+      color: var(--amarelo);
     }
 
     /* CONTATO */
 
     .contact {
-      margin: 35px 0 25px;
+      margin: 35px auto;
+      border: 2px solid var(--azul);
+      border-radius: 18px;
       padding: 30px 20px;
       text-align: center;
-      border: 2px solid #063b9e;
-      border-radius: 18px;
+      background: #fff;
+    }
+
+    .contact-icon {
+      font-size: 30px;
+      margin-bottom: 8px;
     }
 
     .contact h2 {
-      margin: 5px 0 12px;
       font-size: 27px;
+      margin-bottom: 8px;
     }
 
     .contact p {
-      font-size: 17px;
+      margin-bottom: 18px;
     }
 
     .btn {
       display: inline-block;
-      padding: 12px 25px;
-      border-radius: 30px;
-      background: #ffc400;
-      color: #102044;
-      font-weight: bold;
-      transition: .2s;
+      background: var(--amarelo);
+      color: var(--azul-escuro);
+      font-weight: 800;
+      padding: 12px 28px;
+      border-radius: 25px;
+      transition: 0.2s;
     }
 
     .btn:hover {
       transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+
+    .btn-blue {
+      background: var(--azul);
+      color: #fff;
     }
 
     /* SERVIÇOS */
@@ -132,135 +163,176 @@
     .services {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      margin: 25px 0 45px;
-      background: #f6f9fd;
-      border: 1px solid #e5c347;
+      border: 1px solid var(--amarelo);
       border-radius: 18px;
       overflow: hidden;
+      background: #fff;
+      margin-bottom: 45px;
     }
 
     .service {
       padding: 28px 20px;
       text-align: center;
-      border-right: 1px solid #e5c347;
+      border-right: 1px solid var(--amarelo);
     }
 
     .service:last-child {
-      border-right: 0;
+      border-right: none;
     }
 
-    .icon {
-      font-size: 30px;
+    .service .icon {
+      font-size: 32px;
+      margin-bottom: 8px;
     }
 
     .service h2 {
-      color: #063b9e;
+      color: var(--azul);
       font-size: 21px;
+      margin-bottom: 10px;
     }
 
     .service p {
-      line-height: 1.5;
+      font-size: 16px;
     }
 
-    /* CADASTRO */
+    /* SEÇÃO GERAL */
 
-    .register-box {
-      margin: 0 0 45px;
-      padding: 30px 20px;
-      text-align: center;
-      background: #063b9e;
-      color: white;
-      border-radius: 18px;
+    .section {
+      padding: 15px 0 45px;
     }
 
-    .register-box h2 {
-      margin-top: 0;
-      font-size: 28px;
-    }
-
-    .register-box p {
-      max-width: 650px;
-      margin: 0 auto 20px;
-      line-height: 1.5;
-    }
-
-    .register-box .btn {
-      background: #ffc400;
-    }
-
-    /* LOJAS */
-
-    .stores-section {
-      margin: 45px 0;
-    }
-
-    .title {
+    .section-title {
       text-align: center;
       margin-bottom: 25px;
     }
 
-    .title h2 {
-      color: #063b9e;
-      font-size: 28px;
+    .section-title h2 {
+      color: var(--azul);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 32px;
+      margin-bottom: 5px;
+    }
+
+    .section-title p {
+      font-size: 16px;
+    }
+
+    /* BOTÃO CADASTRO */
+
+    .register-box {
+      background: linear-gradient(135deg, var(--azul), #0a4dbd);
+      color: #fff;
+      border-radius: 18px;
+      padding: 30px 25px;
+      margin-bottom: 45px;
+      text-align: center;
+    }
+
+    .register-box h2 {
+      font-size: 27px;
+      margin-bottom: 8px;
+    }
+
+    .register-box p {
+      margin-bottom: 20px;
+    }
+
+    .register-box .btn {
+      background: var(--amarelo);
+    }
+
+    /* LOJAS */
+
+    .category {
+      margin-bottom: 35px;
+    }
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--azul);
+      color: #fff;
+      border-left: 7px solid var(--amarelo);
+      border-radius: 10px;
+      padding: 11px 16px;
+      margin-bottom: 15px;
+      font-size: 21px;
     }
 
     .stores-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
     }
 
     .store {
-      min-height: 62px;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      min-height: 58px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      color: var(--azul-escuro);
+      font-weight: 800;
       text-align: center;
-      padding: 10px;
-      border: 1px solid #d3def0;
-      border-radius: 13px;
-      background: white;
-      color: #102044;
-      font-weight: bold;
+      transition: 0.2s;
     }
 
     .store:hover {
-      background: #fff4c7;
-      border-color: #ffc400;
+      border-color: var(--amarelo);
+      background: var(--amarelo-claro);
+      color: var(--azul);
+      transform: translateY(-2px);
     }
 
     /* RODAPÉ */
 
     footer {
-      margin-top: 55px;
-      padding: 30px 0;
-      background: #f6f9fd;
-      text-align: center;
+      margin-top: 25px;
+      background: var(--azul-escuro);
+      color: #fff;
+      padding: 35px 0;
     }
 
-    footer h2 {
-      color: #063b9e;
+    .footer-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 30px;
+    }
+
+    footer h2,
+    footer h3 {
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      color: #e4e9f4;
     }
 
     footer a {
-      color: #063b9e;
-      font-weight: bold;
+      color: var(--amarelo);
     }
 
     .copyright {
-      margin-top: 20px;
-      color: #667085;
-      font-size: 13px;
+      border-top: 1px solid rgba(255,255,255,.15);
+      margin-top: 25px;
+      padding-top: 18px;
+      text-align: center;
+      font-size: 14px;
+      color: #cbd4e5;
     }
 
     /* CELULAR */
 
     @media (max-width: 800px) {
 
-      .top {
-        padding: 8px 0;
+      .topbar-content {
         flex-direction: column;
-        gap: 8px;
+        text-align: center;
+        gap: 5px;
       }
 
       .services {
@@ -268,32 +340,45 @@
       }
 
       .service {
-        border-right: 0;
-        border-bottom: 1px solid #e5c347;
+        border-right: none;
+        border-bottom: 1px solid var(--amarelo);
       }
 
       .service:last-child {
-        border-bottom: 0;
+        border-bottom: none;
       }
 
       .stores-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
     }
 
     @media (max-width: 480px) {
 
-      .logo {
-        font-size: 43px;
+      .brand {
+        font-size: 48px;
       }
 
       .subtitle {
-        font-size: 12px;
-        letter-spacing: 2px;
+        font-size: 14px;
+        letter-spacing: 3px;
+      }
+
+      .hero-message {
+        font-size: 15px;
       }
 
       .stores-grid {
         grid-template-columns: 1fr;
+      }
+
+      .category-title {
+        font-size: 19px;
       }
     }
   </style>
@@ -301,18 +386,21 @@
 
 <body>
 
-  <!-- TOPO -->
+  <!-- =========================
+       TOPO
+  ========================== -->
 
-  <header>
-    <div class="wrap top">
+  <header class="topbar">
+    <div class="wrap topbar-content">
 
-      <div class="brand-small">
+      <div class="top-brand">
         🇧🇪 EUROCOMPRA
       </div>
 
       <a
         class="email"
-        href="mailto:eurocompra2@gmail.com">
+        href="mailto:eurocompra2@gmail.com"
+      >
         ✉️ eurocompra2@gmail.com
       </a>
 
@@ -320,22 +408,24 @@
   </header>
 
 
-  <!-- LOGO -->
+  <!-- =========================
+       HERO
+  ========================== -->
 
   <section class="hero">
 
     <div class="wrap">
 
-      <h1 class="logo">
+      <div class="brand">
         Euro<span>Compra</span>
-      </h1>
+      </div>
 
       <div class="subtitle">
         COMPRAS NA BÉLGICA
       </div>
 
       <div class="hero-message">
-        Os melhores sites da <span>Bélgica</span>, reunidos para você!
+        Os melhores sites da <strong>Bélgica</strong>, reunidos para você!
       </div>
 
     </div>
@@ -345,17 +435,16 @@
 
   <main class="wrap">
 
-    <!-- CONTATO -->
+
+    <!-- =========================
+         CONTATO
+    ========================== -->
 
     <section class="contact">
 
-      <div style="font-size:25px;">
-        💬
-      </div>
+      <div class="contact-icon">💬</div>
 
-      <h2>
-        Entre em contato conosco
-      </h2>
+      <h2>Entre em contato conosco</h2>
 
       <p>
         WhatsApp · 10h às 18h
@@ -363,28 +452,27 @@
 
       <a
         class="btn"
-        href="https://wa.me/"
+        href="https://wa.me/324567970301"
         target="_blank"
-        rel="noopener">
+        rel="noopener"
+      >
         FALAR AGORA
       </a>
 
     </section>
 
 
-    <!-- SERVIÇOS -->
+    <!-- =========================
+         SERVIÇOS
+    ========================== -->
 
     <section class="services">
 
       <div class="service">
 
-        <div class="icon">
-          🛍️
-        </div>
+        <div class="icon">🛍️</div>
 
-        <h2>
-          NOSSOS SERVIÇOS
-        </h2>
+        <h2>NOSSOS SERVIÇOS</h2>
 
         <p>
           Serviços, valores e perguntas frequentes.
@@ -395,13 +483,9 @@
 
       <div class="service">
 
-        <div class="icon">
-          📦
-        </div>
+        <div class="icon">📦</div>
 
-        <h2>
-          REDIRECIONAMENTO
-        </h2>
+        <h2>REDIRECIONAMENTO</h2>
 
         <p>
           Recebemos suas compras na Bélgica e enviamos para você.
@@ -412,13 +496,9 @@
 
       <div class="service">
 
-        <div class="icon">
-          🛒
-        </div>
+        <div class="icon">🛒</div>
 
-        <h2>
-          PERSONAL SHOPPER
-        </h2>
+        <h2>PERSONAL SHOPPER</h2>
 
         <p>
           Não encontrou? Nós compramos para você!
@@ -429,150 +509,399 @@
     </section>
 
 
-    <!-- CADASTRO SEPARADO -->
+    <!-- =========================
+         CADASTRO
+    ========================== -->
 
     <section class="register-box">
 
-      <h2>
-        📝 Cadastre-se na EuroCompra
-      </h2>
+      <h2>📝 Faça seu cadastro</h2>
 
       <p>
-        Faça seu cadastro para facilitar suas compras,
-        redirecionamentos e atendimento personalizado.
+        Cadastre seus dados para facilitar seu atendimento com a EuroCompra.
       </p>
 
       <a
         class="btn"
-        href="cadastro.html">
-        CADASTRE-SE
+        href="cadastro.html"
+      >
+        CADASTRE-SE AQUI
       </a>
 
     </section>
 
 
-    <!-- LOJAS -->
+    <!-- =========================
+         LOJAS
+    ========================== -->
 
-    <section class="stores-section" id="lojas">
+    <section class="section" id="lojas">
 
-      <div class="title">
+      <div class="section-title">
 
-        <h2>
-          🛍️ LOJAS DA BÉLGICA
-        </h2>
+        <h2>🛍️ LOJAS DA BÉLGICA</h2>
 
         <p>
-          Acesse seus sites favoritos
+          Acesse seus sites favoritos de forma rápida e organizada.
         </p>
 
       </div>
 
 
-      <div class="stores-grid">
+      <!-- MODA -->
 
-        <a
-          class="store"
-          href="https://www.zara.com/be/"
-          target="_blank"
-          rel="noopener">
-          ZARA
-        </a>
+      <div class="category">
 
-        <a
-          class="store"
-          href="https://www.zalando.be/"
-          target="_blank"
-          rel="noopener">
-          ZALANDO
-        </a>
+        <h3 class="category-title">
+          👗 Moda
+        </h3>
 
-        <a
-          class="store"
-          href="https://www2.hm.com/"
-          target="_blank"
-          rel="noopener">
-          H&M
-        </a>
+        <div class="stores-grid">
 
-        <a
-          class="store"
-          href="https://www.pullandbear.com/"
-          target="_blank"
-          rel="noopener">
-          PULL&BEAR
-        </a>
+          <a class="store"
+             href="https://www.zara.com/be/"
+             target="_blank"
+             rel="noopener">
+            ZARA
+          </a>
 
-        <a
-          class="store"
-          href="https://www.bershka.com/"
-          target="_blank"
-          rel="noopener">
-          BERSHKA
-        </a>
+          <a class="store"
+             href="https://www.zalando.be/"
+             target="_blank"
+             rel="noopener">
+            ZALANDO
+          </a>
 
-        <a
-          class="store"
-          href="https://www.nike.com/be/"
-          target="_blank"
-          rel="noopener">
-          NIKE
-        </a>
+          <a class="store"
+             href="https://www2.hm.com/"
+             target="_blank"
+             rel="noopener">
+            H&M
+          </a>
 
-        <a
-          class="store"
-          href="https://www.adidas.be/"
-          target="_blank"
-          rel="noopener">
-          ADIDAS
-        </a>
+          <a class="store"
+             href="https://www.pullandbear.com/"
+             target="_blank"
+             rel="noopener">
+            PULL&BEAR
+          </a>
 
-        <a
-          class="store"
-          href="https://eu.puma.com/"
-          target="_blank"
-          rel="noopener">
-          PUMA
-        </a>
+          <a class="store"
+             href="https://www.bershka.com/"
+             target="_blank"
+             rel="noopener">
+            BERSHKA
+          </a>
 
-        <a
-          class="store"
-          href="https://www.footlocker.be/"
-          target="_blank"
-          rel="noopener">
-          FOOT LOCKER
-        </a>
+          <a class="store"
+             href="https://shop.mango.com/be/"
+             target="_blank"
+             rel="noopener">
+            MANGO
+          </a>
 
-        <a
-          class="store"
-          href="https://www.jdsports.be/"
-          target="_blank"
-          rel="noopener">
-          JD SPORTS
-        </a>
+          <a class="store"
+             href="https://www.c-and-a.com/be/"
+             target="_blank"
+             rel="noopener">
+            C&A
+          </a>
 
-        <a
-          class="store"
-          href="https://www.douglas.be/"
-          target="_blank"
-          rel="noopener">
-          DOUGLAS
-        </a>
+          <a class="store"
+             href="https://www.uniqlo.com/"
+             target="_blank"
+             rel="noopener">
+            UNIQLO
+          </a>
 
-        <a
-          class="store"
-          href="https://www.notino.be/"
-          target="_blank"
-          rel="noopener">
-          NOTINO
-        </a>
+        </div>
 
-        <a
-          class="store"
-          href="https://www.yves-rocher.be/"
-          target="_blank"
-          rel="noopener">
-          YVES ROCHER
-        </a>
+      </div>
+
+
+      <!-- ESPORTES -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          👟 Esportes
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.nike.com/be/"
+             target="_blank"
+             rel="noopener">
+            NIKE
+          </a>
+
+          <a class="store"
+             href="https://www.adidas.be/"
+             target="_blank"
+             rel="noopener">
+            ADIDAS
+          </a>
+
+          <a class="store"
+             href="https://eu.puma.com/"
+             target="_blank"
+             rel="noopener">
+            PUMA
+          </a>
+
+          <a class="store"
+             href="https://www.decathlon.be/"
+             target="_blank"
+             rel="noopener">
+            DECATHLON
+          </a>
+
+          <a class="store"
+             href="https://www.footlocker.be/"
+             target="_blank"
+             rel="noopener">
+            FOOT LOCKER
+          </a>
+
+          <a class="store"
+             href="https://www.jdsports.be/"
+             target="_blank"
+             rel="noopener">
+            JD SPORTS
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- ELETRÔNICOS -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          💻 Eletrônicos
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.mediamarkt.be/"
+             target="_blank"
+             rel="noopener">
+            MEDIAMARKT
+          </a>
+
+          <a class="store"
+             href="https://www.coolblue.be/"
+             target="_blank"
+             rel="noopener">
+            COOLBLUE
+          </a>
+
+          <a class="store"
+             href="https://www.vandenborre.be/"
+             target="_blank"
+             rel="noopener">
+            VANDEN BORRE
+          </a>
+
+          <a class="store"
+             href="https://www.fnac.be/"
+             target="_blank"
+             rel="noopener">
+            FNAC
+          </a>
+
+          <a class="store"
+             href="https://www.bol.com/"
+             target="_blank"
+             rel="noopener">
+            BOL.COM
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- BELEZA -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          💄 Beleza
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.douglas.be/"
+             target="_blank"
+             rel="noopener">
+            DOUGLAS
+          </a>
+
+          <a class="store"
+             href="https://www.notino.be/"
+             target="_blank"
+             rel="noopener">
+            NOTINO
+          </a>
+
+          <a class="store"
+             href="https://www.iciparisxl.be/"
+             target="_blank"
+             rel="noopener">
+            ICI PARIS XL
+          </a>
+
+          <a class="store"
+             href="https://www.kruidvat.be/"
+             target="_blank"
+             rel="noopener">
+            KRUIDVAT
+          </a>
+
+          <a class="store"
+             href="https://www.yves-rocher.be/"
+             target="_blank"
+             rel="noopener">
+            YVES ROCHER
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- CASA -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          🏠 Casa
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.ikea.com/be/"
+             target="_blank"
+             rel="noopener">
+            IKEA
+          </a>
+
+          <a class="store"
+             href="https://www.brico.be/"
+             target="_blank"
+             rel="noopener">
+            BRICO
+          </a>
+
+          <a class="store"
+             href="https://www.casashops.com/"
+             target="_blank"
+             rel="noopener">
+            CASA
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- SUPERMERCADOS -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          🛒 Supermercados
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.carrefour.be/"
+             target="_blank"
+             rel="noopener">
+            CARREFOUR
+          </a>
+
+          <a class="store"
+             href="https://www.delhaize.be/"
+             target="_blank"
+             rel="noopener">
+            DELHAIZE
+          </a>
+
+          <a class="store"
+             href="https://www.colruyt.be/"
+             target="_blank"
+             rel="noopener">
+            COLRUYT
+          </a>
+
+          <a class="store"
+             href="https://www.lidl.be/"
+             target="_blank"
+             rel="noopener">
+            LIDL
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- BEBÊS E CRIANÇAS -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          👶 Bebês e crianças
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.dreambaby.be/"
+             target="_blank"
+             rel="noopener">
+            DREAMBABY
+          </a>
+
+          <a class="store"
+             href="https://www.c-and-a.com/be/"
+             target="_blank"
+             rel="noopener">
+            C&A KIDS
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- ANIMAIS -->
+
+      <div class="category">
+
+        <h3 class="category-title">
+          🐶 Animais
+        </h3>
+
+        <div class="stores-grid">
+
+          <a class="store"
+             href="https://www.zooplus.be/"
+             target="_blank"
+             rel="noopener">
+            ZOOPLUS
+          </a>
+
+        </div>
 
       </div>
 
@@ -581,29 +910,54 @@
   </main>
 
 
-  <!-- RODAPÉ -->
+  <!-- =========================
+       RODAPÉ
+  ========================== -->
 
   <footer>
 
-    <div class="wrap">
+    <div class="wrap footer-content">
 
-      <h2>
-        🇧🇪 EuroCompra
-      </h2>
+      <div>
+        <h2>🇧🇪 EuroCompra</h2>
 
-      <p>
-        Conectamos você ao melhor das compras na Bélgica.
-      </p>
-
-      <p>
-        <a href="mailto:eurocompra2@gmail.com">
-          eurocompra2@gmail.com
-        </a>
-      </p>
-
-      <div class="copyright">
-        © 2026 EuroCompra. Todos os direitos reservados.
+        <p>
+          Conectamos você ao melhor das compras na Bélgica.
+        </p>
       </div>
+
+
+      <div>
+
+        <h3>Contato</h3>
+
+        <p>
+          <a href="mailto:eurocompra2@gmail.com">
+            eurocompra2@gmail.com
+          </a>
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <h3>Cadastro</h3>
+
+        <p>
+          <a href="cadastro.html">
+            Faça seu cadastro
+          </a>
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="wrap copyright">
+
+      © 2026 EuroCompra — Compras na Bélgica
 
     </div>
 
