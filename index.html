@@ -1023,7 +1023,7 @@
       return resto === Number(cpf[10]);
     }
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
 
       event.preventDefault();
 
@@ -1033,31 +1033,47 @@
         form.reportValidity();
         return;
       }
+  try {
+    const dados = Object.fromEntries(new FormData(form));
 
-      if (!validarCPF(cpfInput.value)) {
-        cpfInput.focus();
-        alert("Por favor, informe um CPF válido.");
-        return;
+    message.textContent = "Enviando cadastro...";
+    message.style.display = "block";
+
+    const resposta = await fetch(
+      "https://eurocompra-api.eurocompra2.workers.dev/api/cadastro",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dados)
       }
+    );
 
-      /*
-        POR ENQUANTO NÃO ENVIAMOS OS DADOS.
+    const resultado = await resposta.json();
 
-        Na próxima etapa vamos criar o backend seguro
-        e conectar este formulário ao WhatsApp Business.
-      */
+    if (!resposta.ok || !resultado.ok) {
+      throw new Error(
+        resultado.message || "Não foi possível enviar o cadastro."
+      );
+    }
 
-      message.textContent =
-        "Cadastro validado. A integração segura com o WhatsApp será ativada na próxima etapa.";
+    message.textContent =
+      "Cadastro enviado com sucesso! Em breve entraremos em contato pelo WhatsApp.";
 
-      message.style.display = "block";
+    message.style.display = "block";
 
-      window.scrollTo({
-        top: message.offsetTop - 120,
-        behavior: "smooth"
-      });
+    form.reset();
 
-    });
+  } catch (erro) {
+    console.error(erro);
+
+    message.textContent =
+      "Não foi possível enviar o cadastro. Tente novamente.";
+
+    message.style.display = "block";
+  }
+});
   </script>
 
 </body>
