@@ -16,21 +16,33 @@
     });
   }
 
+  async function consultar(url) {
+    const controlador = new AbortController();
+    const timeout = setTimeout(() => controlador.abort(), 8000);
+    try {
+      const resposta = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: controlador.signal,
+        cache: 'no-store'
+      });
+      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+      return await resposta.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   async function buscarCEP() {
     const valor = cep.value.replace(/\D/g, '');
     if (valor.length !== 8) return;
 
     cep.setCustomValidity('');
-    cep.disabled = true;
 
     try {
-      const resposta = await fetch(`https://viacep.com.br/ws/${valor}/json/`, {
-        headers: { Accept: 'application/json' }
-      });
+      // ViaCEP é a fonte principal.
+      let dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`);
 
-      if (!resposta.ok) throw new Error('Falha na consulta do CEP');
-      const dados = await resposta.json();
-
+      // BrasilAPI fica como segunda opção caso ViaCEP esteja indisponível.
       if (dados.erro) {
         limparEndereco();
         cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
@@ -46,11 +58,21 @@
       cep.setCustomValidity('');
       const numero = document.getElementById('numero');
       if (numero) numero.focus();
-    } catch (erro) {
-      console.error('Erro ao consultar CEP:', erro);
-      cep.setCustomValidity('Não foi possível consultar o CEP agora. Tente novamente.');
-    } finally {
-      cep.disabled = false;
+    } catch (erroViaCep) {
+      try {
+        const dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`);
+        if (fields.endereco) fields.endereco.value = dados.street || '';
+        if (fields.bairro) fields.bairro.value = dados.neighborhood || '';
+        if (fields.cidade) fields.cidade.value = dados.city || '';
+        if (fields.estado) fields.estado.value = dados.state || '';
+        cep.setCustomValidity('');
+        const numero = document.getElementById('numero');
+        if (numero) numero.focus();
+      } catch (erroBrasilApi) {
+        console.error('Erro ao consultar CEP:', erroViaCep, erroBrasilApi);
+        // Não bloqueia o cadastro: o cliente pode preencher o endereço manualmente.
+        cep.setCustomValidity('');
+      }
     }
   }
 
