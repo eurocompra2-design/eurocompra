@@ -1,86 +1,90 @@
 // EuroCompra — preenchimento automático do endereço pelo CEP brasileiro.
 (function () {
-  const cep = document.getElementById('cep');
-  if (!cep) return;
+  function iniciarCEP() {
+    const cep = document.getElementById('cep');
+    if (!cep || cep.dataset.cepAtivo === '1') return;
 
-  const fields = {
-    endereco: document.getElementById('endereco'),
-    bairro: document.getElementById('bairro'),
-    cidade: document.getElementById('cidade'),
-    estado: document.getElementById('estado')
-  };
+    const fields = {
+      endereco: document.getElementById('endereco'),
+      bairro: document.getElementById('bairro'),
+      cidade: document.getElementById('cidade'),
+      estado: document.getElementById('estado')
+    };
 
-  function limparEndereco() {
-    Object.values(fields).forEach((field) => {
-      if (field) field.value = '';
+    if (!fields.endereco || !fields.bairro || !fields.cidade || !fields.estado) return;
+    cep.dataset.cepAtivo = '1';
+
+    function limparEndereco() {
+      Object.values(fields).forEach((field) => {
+        if (field) field.value = '';
+      });
+    }
+
+    async function consultar(url) {
+      const controlador = new AbortController();
+      const timeout = setTimeout(() => controlador.abort(), 8000);
+      try {
+        const resposta = await fetch(url, {
+          headers: { Accept: 'application/json' },
+          signal: controlador.signal,
+          cache: 'no-store'
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        return await resposta.json();
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function buscarCEP() {
+      const valor = cep.value.replace(/\D/g, '');
+      if (valor.length !== 8) return;
+
+      cep.setCustomValidity('');
+
+      try {
+        let dados;
+
+        try {
+          dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`);
+        } catch (erroViaCep) {
+          dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`);
+        }
+
+        if (dados.erro) {
+          limparEndereco();
+          cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
+          cep.reportValidity();
+          return;
+        }
+
+        fields.endereco.value = dados.logradouro || dados.street || '';
+        fields.bairro.value = dados.bairro || dados.neighborhood || '';
+        fields.cidade.value = dados.localidade || dados.city || '';
+        fields.estado.value = dados.uf || dados.state || '';
+        cep.setCustomValidity('');
+
+        const numero = document.getElementById('numero');
+        if (numero) numero.focus();
+      } catch (erro) {
+        console.error('Erro ao consultar CEP:', erro);
+        cep.setCustomValidity('');
+      }
+    }
+
+    cep.addEventListener('blur', buscarCEP);
+    cep.addEventListener('input', function () {
+      const valor = this.value.replace(/\D/g, '');
+      if (valor.length === 8) buscarCEP();
     });
   }
 
-  async function consultar(url) {
-    const controlador = new AbortController();
-    const timeout = setTimeout(() => controlador.abort(), 8000);
-    try {
-      const resposta = await fetch(url, {
-        headers: { Accept: 'application/json' },
-        signal: controlador.signal,
-        cache: 'no-store'
-      });
-      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-      return await resposta.json();
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  async function buscarCEP() {
-    const valor = cep.value.replace(/\D/g, '');
-    if (valor.length !== 8) return;
-
-    cep.setCustomValidity('');
-
-    try {
-      // ViaCEP é a fonte principal.
-      let dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`);
-
-      // BrasilAPI fica como segunda opção caso ViaCEP esteja indisponível.
-      if (dados.erro) {
-        limparEndereco();
-        cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
-        cep.reportValidity();
-        return;
-      }
-
-      if (fields.endereco) fields.endereco.value = dados.logradouro || '';
-      if (fields.bairro) fields.bairro.value = dados.bairro || '';
-      if (fields.cidade) fields.cidade.value = dados.localidade || '';
-      if (fields.estado) fields.estado.value = dados.uf || '';
-
-      cep.setCustomValidity('');
-      const numero = document.getElementById('numero');
-      if (numero) numero.focus();
-    } catch (erroViaCep) {
-      try {
-        const dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`);
-        if (fields.endereco) fields.endereco.value = dados.street || '';
-        if (fields.bairro) fields.bairro.value = dados.neighborhood || '';
-        if (fields.cidade) fields.cidade.value = dados.city || '';
-        if (fields.estado) fields.estado.value = dados.state || '';
-        cep.setCustomValidity('');
-        const numero = document.getElementById('numero');
-        if (numero) numero.focus();
-      } catch (erroBrasilApi) {
-        console.error('Erro ao consultar CEP:', erroViaCep, erroBrasilApi);
-        // Não bloqueia o cadastro: o cliente pode preencher o endereço manualmente.
-        cep.setCustomValidity('');
-      }
-    }
-  }
-
-  cep.addEventListener('blur', buscarCEP);
-  cep.addEventListener('input', function () {
-    const valor = this.value.replace(/\D/g, '');
-    if (valor.length === 8) buscarCEP();
-  });
+  // O index.html clona o formulário para substituir listeners antigos.
+  // Precisamos conectar o CEP também ao formulário clonado.
+  iniciarCEP();
+  setTimeout(iniciarCEP, 100);
+  setTimeout(iniciarCEP, 500);
+  setTimeout(iniciarCEP, 1000);
 })();
 
 // EuroCompra — envio definitivo do cadastro.
