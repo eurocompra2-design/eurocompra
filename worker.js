@@ -228,3 +228,5 @@ O cadastro foi salvo no sistema EuroCompra.`,
     return json({ ok: false, message: "Rota não encontrada." }, 404);
   },
 };
+
+// deploy: apply production secrets
