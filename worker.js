@@ -211,7 +211,7 @@ O cadastro foi salvo no sistema EuroCompra.`,
       try {
         const limite = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
         const resultado = await env.DB.prepare(`
-          SELECT codigo, nome, email, whatsapp, cep, endereco, numero, complemento,
+          SELECT codigo, nome, cpf, email, whatsapp, cep, endereco, numero, complemento,
                  bairro, cidade, estado, servico, produto, observacoes, status,
                  criado_em, atualizado_em
           FROM clientes
@@ -229,4 +229,4 @@ O cadastro foi salvo no sistema EuroCompra.`,
   },
 };
 
-// deploy: apply production secrets
+// deploy: show CPF in admin client list
