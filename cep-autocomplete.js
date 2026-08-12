@@ -46,3 +46,23 @@
     if (valor.length === 8) buscarCEP();
   });
 })();
+
+// Corrige a mensagem visual do cadastro para não prometer WhatsApp
+// enquanto a integração Meta/WhatsApp ainda não estiver ativa.
+(function () {
+  const message = document.getElementById('formMessage');
+  if (!message) return;
+
+  const corrigirMensagem = () => {
+    const texto = message.textContent || '';
+    if (texto.toLowerCase().includes('whatsapp')) {
+      message.textContent = 'Cadastro recebido com sucesso! Seus dados foram salvos com segurança. Em breve entraremos em contato pelos dados informados.';
+    }
+  };
+
+  new MutationObserver(corrigirMensagem).observe(message, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+})();
