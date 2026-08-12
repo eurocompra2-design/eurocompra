@@ -1,12 +1,141 @@
 <!doctype html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EuroCompra | Painel</title><style>body{font-family:Arial;margin:0;background:#f5f7fb;color:#172033}.wrap{max-width:1100px;margin:40px auto;padding:20px}.box{background:#fff;padding:24px;border-radius:18px;box-shadow:0 10px 30px #0001}.row{display:flex;gap:10px;flex-wrap:wrap}input,button{padding:12px;border-radius:10px;border:1px solid #ddd}button{background:#063b9e;color:#fff;font-weight:700;cursor:pointer}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{text-align:left;padding:10px;border-bottom:1px solid #eee}#app{display:none}.erro{color:#b42318}</style></head>
-<body><div class="wrap"><div class="box" id="login"><h1>EuroCompra</h1><p>Painel privado de clientes</p><div class="row"><input id="usuario" placeholder="Usuário" autocomplete="username"><input id="senha" type="password" placeholder="Senha" autocomplete="current-password"><button id="entrar">Entrar</button></div><p id="erro" class="erro"></p></div><div class="box" id="app"><div class="row" style="justify-content:space-between"><h1>Clientes cadastrados</h1><button id="sair">Sair</button></div><p id="status">Carregando...</p><div style="overflow:auto"><table><thead><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Cidade</th><th>Estado</th><th>Status</th><th>Data</th></tr></thead><tbody id="clientes"></tbody></table></div></div></div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EuroCompra | Painel</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;background:#f5f7fb;color:#172033}
+    .wrap{max-width:1100px;margin:40px auto;padding:20px}
+    .box{background:#fff;padding:24px;border-radius:18px;box-shadow:0 10px 30px #0001}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    input,button{padding:12px;border-radius:10px;border:1px solid #ddd;font:inherit}
+    input{flex:1;min-width:260px}
+    button{background:#063b9e;color:#fff;font-weight:700;cursor:pointer}
+    button.secondary{background:#fff;color:#063b9e;border-color:#063b9e}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #eee;white-space:nowrap}
+    .app{display:none}
+    .erro{color:#b42318}
+    .info{color:#667085;font-size:14px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+    @media(max-width:700px){.wrap{margin:15px auto;padding:12px}.box{padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="box" id="login">
+      <h1>EuroCompra</h1>
+      <p>Painel privado de clientes</p>
+      <p class="info">Digite o token administrativo configurado nos Secrets do Worker. O token fica somente nesta sessão do navegador e não é salvo no site.</p>
+      <div class="row">
+        <input id="token" type="password" placeholder="Token administrativo" autocomplete="off">
+        <button id="entrar">Entrar</button>
+      </div>
+      <p id="erro" class="erro"></p>
+    </div>
+
+    <div class="box app" id="app">
+      <div class="top">
+        <div>
+          <h1>Clientes cadastrados</h1>
+          <p id="status" class="info">Carregando...</p>
+        </div>
+        <div class="row">
+          <button id="atualizar">Atualizar</button>
+          <button id="sair" class="secondary">Sair</button>
+        </div>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>WhatsApp</th>
+              <th>CEP</th>
+              <th>Cidade</th>
+              <th>Estado</th>
+              <th>Serviço</th>
+              <th>Produto</th>
+              <th>Status</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="clientes"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 <script>
-const API='https://eurocompra-api.eurocompra2.workers.dev';let auth='';
-const login=document.getElementById('login'),app=document.getElementById('app'),erro=document.getElementById('erro'),statusEl=document.getElementById('status');
-document.getElementById('entrar').onclick=async()=>{const u=document.getElementById('usuario').value.trim(),s=document.getElementById('senha').value;auth='Basic '+btoa(u+':'+s);try{const r=await fetch(API+'/api/admin/clientes',{headers:{Authorization:auth}});if(!r.ok)throw 0;const d=await r.json();render(d.clientes||[]);login.style.display='none';app.style.display='block'}catch{auth='';erro.textContent='Usuário ou senha inválidos.'}};
-document.getElementById('sair').onclick=()=>{auth='';app.style.display='none';login.style.display='block';document.getElementById('senha').value=''};
-function render(items){statusEl.textContent=items.length+' cadastro(s) encontrado(s).';document.getElementById('clientes').innerHTML=items.map(c=>`<tr><td>${esc(c.id)}</td><td>${esc(c.nome)}</td><td>${esc(c.email)}</td><td>${esc(c.whatsapp)}</td><td>${esc(c.cidade)}</td><td>${esc(c.estado)}</td><td>${esc(c.status)}</td><td>${esc(c.criado_em)}</td></tr>`).join('')}
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-</script></body></html>
+const API='https://eurocompra-api.eurocompra2.workers.dev';
+let authToken='';
+const login=document.getElementById('login');
+const app=document.getElementById('app');
+const erro=document.getElementById('erro');
+const statusEl=document.getElementById('status');
+
+async function carregarClientes(){
+  statusEl.textContent='Carregando...';
+  try{
+    const r=await fetch(API+'/api/clientes?limit=100',{headers:{'X-Admin-Token':authToken,'Accept':'application/json'}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.message||'Não autorizado.');
+    render(d.clientes||[]);
+  }catch(e){
+    statusEl.textContent='';
+    erro.textContent=e.message||'Não foi possível carregar os clientes.';
+    authToken='';
+    app.style.display='none';
+    login.style.display='block';
+  }
+}
+
+document.getElementById('entrar').onclick=async()=>{
+  const token=document.getElementById('token').value.trim();
+  erro.textContent='';
+  if(!token){erro.textContent='Informe o token administrativo.';return;}
+  authToken=token;
+  await carregarClientes();
+  if(authToken){login.style.display='none';app.style.display='block';}
+};
+
+document.getElementById('atualizar').onclick=carregarClientes;
+
+document.getElementById('sair').onclick=()=>{
+  authToken='';
+  document.getElementById('token').value='';
+  app.style.display='none';
+  login.style.display='block';
+  erro.textContent='';
+};
+
+document.getElementById('token').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('entrar').click();
+});
+
+function render(items){
+  statusEl.textContent=items.length+' cadastro(s) encontrado(s).';
+  document.getElementById('clientes').innerHTML=items.map(c=>`<tr>
+    <td>${esc(c.codigo)}</td>
+    <td>${esc(c.nome)}</td>
+    <td>${esc(c.email)}</td>
+    <td>${esc(c.whatsapp)}</td>
+    <td>${esc(c.cep)}</td>
+    <td>${esc(c.cidade)}</td>
+    <td>${esc(c.estado)}</td>
+    <td>${esc(c.servico)}</td>
+    <td>${esc(c.produto)}</td>
+    <td>${esc(c.status)}</td>
+    <td>${esc(c.criado_em)}</td>
+  </tr>`).join('');
+}
+
+function esc(v){
+  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
