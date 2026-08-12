@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EuroCompra — Consulta de Produtos</title>
+<style>
+:root{--blue:#063b9e;--light:#f5f8ff;--text:#172033;--muted:#64748b;--green:#15803d;--yellow:#a16207;--red:#b91c1c;--gray:#475569}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--light);color:var(--text)}
+.wrap{max-width:850px;margin:auto;padding:28px 18px 50px}.card{background:#fff;border-radius:20px;padding:26px;box-shadow:0 8px 30px #00000012}
+.badge{display:inline-block;background:#e8efff;color:var(--blue);padding:7px 11px;border-radius:999px;font-weight:700;font-size:13px}
+h1{margin:14px 0 8px;font-size:30px;color:var(--blue)}.intro{color:var(--muted);line-height:1.55}
+.search{display:flex;gap:10px;margin:22px 0 8px}.search input{flex:1;padding:15px 16px;border:1px solid #cbd5e1;border-radius:12px;font-size:16px;outline:none}.search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #063b9e18}
+button{border:0;border-radius:12px;padding:14px 18px;background:var(--blue);color:white;font-weight:700;font-size:15px;cursor:pointer}.hint{font-size:13px;color:var(--muted)}
+.result{margin-top:22px;border-radius:16px;padding:20px;border:1px solid #e2e8f0;display:none}.result.show{display:block}.status{font-size:20px;font-weight:800;margin-bottom:8px}.green{color:var(--green)}.yellow{color:var(--yellow)}.red{color:var(--red)}.gray{color:var(--gray)}
+.meta{font-size:14px;color:var(--muted);margin:7px 0 14px}.reason{line-height:1.55}.next{margin-top:15px;font-weight:700}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.secondary{background:#e8efff;color:var(--blue)}
+.note{margin-top:22px;background:#fff7ed;border:1px solid #fed7aa;padding:15px;border-radius:12px;font-size:13px;line-height:1.55;color:#7c2d12}.examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.chip{background:#f1f5f9;border:0;color:#334155;padding:9px 12px;border-radius:999px;cursor:pointer}footer{font-size:12px;color:var(--muted);line-height:1.5;margin-top:18px}
+@media(max-width:650px){.search{flex-direction:column}.search button{width:100%}h1{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<span class="badge">🇧🇪 EUROCOMPRA • 🇧🇷 BRASIL</span>
+<h1>🔎 Consulte seu produto antes de comprar</h1>
+<p class="intro">Digite o nome do produto, marca ou categoria. A ferramenta faz uma <b>triagem inicial</b> e mostra se o item é comum, se precisa de consulta ou se não é aceito pela EuroCompra.</p>
+<div class="search"><input id="q" type="search" placeholder="Ex.: perfume Dior, tênis Nike, suplemento..." autocomplete="off"><button onclick="consultar()">🔍 CONSULTAR PRODUTO</button></div>
+<div class="hint">Você também pode pesquisar por palavras como “perfume”, “medicamento”, “tênis”, “arma”, “cosmético” etc.</div>
+<div id="result" class="result"></div>
+<div class="examples"><button class="chip" onclick="ex('Tênis Nike')">Tênis Nike</button><button class="chip" onclick="ex('Perfume Dior')">Perfume Dior</button><button class="chip" onclick="ex('Suplemento')">Suplemento</button><button class="chip" onclick="ex('Medicamento')">Medicamento</button><button class="chip" onclick="ex('Arma de fogo')">Arma de fogo</button></div>
+<div class="note"><b>⚠️ Importante:</b> este buscador é uma ferramenta de orientação inicial da EuroCompra. “Pode ser avaliado” não significa garantia de entrada no Brasil. A encomenda pode estar sujeita a regras da Receita Federal, Anvisa, outros órgãos e à aceitação da transportadora. A finalidade, quantidade, frequência, composição e forma de transporte podem alterar a análise.</div>
+<footer>A classificação abaixo é uma triagem comercial da EuroCompra e não substitui uma decisão de autoridade aduaneira ou sanitária. Para produtos restritos, confirme antes de comprar.</footer>
+</div></div>
+<script>
+const regras=[
+{status:'red',title:'🔴 NÃO ACEITAMOS',terms:['arma de fogo','arma','munição','municoes','munição','explosivo','explosivos','droga','entorpecente','cannabis','cocaina','cocaína','heroina','heroína','falsificado','pirata','pirateado','agrotóxico','agrotoxico'],cat:'Produto proibido/restrito',reason:'A EuroCompra não aceita este tipo de produto. Produtos proibidos ou sujeitos a controle específico não devem ser enviados sem as autorizações exigidas.'},
+{status:'yellow',title:'🟡 CONSULTA OBRIGATÓRIA',terms:['medicamento','remedio','remédio','remédios','medicamentos','controlado','canabidiol','cannabidiol','suplemento','suplementos','vitamina','vitaminas','whey','creatina','pré treino','pre treino','alimento','alimentos','chocolate','comida','perfume','parfum','eau de parfum','eau de toilette','cosmetico','cosmético','cosmeticos','cosméticos','maquiagem','makeup','creme','shampoo','champu','higiene','sabonete','saneante','produto médico','produto medico','dispositivo médico','dispositivo medico','semente','sementes','planta','plantas','animal','produto animal','veterinario','veterinário'],cat:'Produto sujeito a regras específicas',reason:'Esta categoria pode envolver regras sanitárias, aduaneiras, composição, finalidade de uso, quantidade ou exigências da transportadora. Consulte a EuroCompra antes da compra.'},
+{status:'green',title:'🟢 PODE SER AVALIADO',terms:['roupa','roupas','camiseta','camisa','calça','calca','vestido','casaco','jaqueta','blusa','moletom','tenis','tênis','sapato','sapatos','bota','sandalia','sandália','bolsa','bolsas','mala','malas','mochila','carteira','cinto','bone','boné','chapeu','chapéu','oculos','óculos','relogio','relógio','relogios','relógios','joia','joias','jóia','jóias','bijuteria','brinco','colar','anel','pulseira','livro','livros','papelaria','caderno','caneta','brinquedo','brinquedos','decoracao','decoração','casa','almofada','quadro','utensilio','utensílio','cozinha','artigo esportivo','esportivo','bola','bicicleta','acessorio','acessório','acessórios','eletronico','eletrônico','notebook','computador','tablet','fone','headphone','camera','câmera','teclado','mouse'],cat:'Produto comum',reason:'Produto aparentemente compatível com uma compra comum, mas a confirmação final depende das regras brasileiras e da transportadora.'}
+];
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()}
+function ex(v){document.getElementById('q').value=v;consultar()}
+function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function consultar(){const raw=document.getElementById('q').value.trim(),box=document.getElementById('result');if(!raw){box.className='result show';box.innerHTML='<div class="status gray">🔵 DIGITE UM PRODUTO</div><div class="reason">Informe o nome do produto para fazer a consulta.</div>';return}const s=norm(raw);let match=null;for(const r of regras){if(r.terms.some(t=>s.includes(norm(t)))){match=r;break}}
+if(!match){box.className='result show';box.innerHTML=`<div class="status gray">🔵 NÃO ENCONTRADO — FALE CONOSCO</div><div class="meta">Produto pesquisado: <b>${esc(raw)}</b></div><div class="reason">Não encontrei uma regra específica para este termo. Isso não significa que o produto seja proibido ou permitido. A EuroCompra precisa avaliar o item individualmente.</div><div class="next">Próximo passo: envie o nome completo, marca e modelo para confirmação.</div><div class="actions"><button class="secondary" onclick="copiarMensagem()">💬 Copiar mensagem para a EuroCompra</button></div>`}
+else{box.className='result show';box.innerHTML=`<div class="status ${match.status}">${match.title}</div><div class="meta"><b>Produto:</b> ${esc(raw)}<br><b>Categoria:</b> ${esc(match.cat)}</div><div class="reason"><b>Por quê?</b><br>${esc(match.reason)}</div><div class="next">Próximo passo: ${match.status==='green'?'a EuroCompra confirma o produto e o transporte antes da compra/envio.':'não compre ainda; fale com a EuroCompra para confirmar.'}</div><div class="actions"><button class="secondary" onclick="copiarMensagem()">💬 Copiar mensagem para a EuroCompra</button></div>`}}
+function copiarMensagem(){const p=document.getElementById('q').value.trim(),text=`Olá, EuroCompra! Consultei o buscador e gostaria de confirmar o envio deste produto:\n\nProduto: ${p}\nMarca/modelo: \n\nPodem verificar para mim?`;navigator.clipboard?.writeText(text).then(()=>alert('Mensagem copiada. Agora é só colar no WhatsApp da EuroCompra.'))}
+document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')consultar()});
+</script>
+</body></html>
