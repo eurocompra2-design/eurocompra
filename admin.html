@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EuroCompra | Controle de clientes</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;color:#172033;margin:0}.wrap{width:min(1200px,94%);margin:35px auto}.box{background:#fff;border:1px solid #e2e7f0;border-radius:18px;padding:24px;box-shadow:0 12px 35px rgba(6,59,158,.08)}h1{color:#06245c}.muted{color:#667085}.row{display:flex;gap:12px;flex-wrap:wrap;margin:15px 0}input,select,button{font:inherit;padding:11px 13px;border-radius:10px;border:1px solid #d9dfeb}input{flex:1;min-width:240px}button{background:#063b9e;color:#fff;border:0;font-weight:700;cursor:pointer}.hidden{display:none}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:18px;min-width:950px}th,td{padding:11px;border-bottom:1px solid #e8ebf2;text-align:left;font-size:14px;vertical-align:top}th{color:#06245c;background:#f8faff;position:sticky;top:0}.code{font-weight:800;color:#063b9e}.error{color:#b42318;margin-top:10px}.success{color:#16804b;margin-top:10px}.status{padding:7px;border-radius:8px}.logout{background:#667085}.details{white-space:pre-line;line-height:1.45}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="box" id="loginBox">
+    <h1>EuroCompra — Área administrativa</h1>
+    <p class="muted">Área privada para consultar clientes e controlar entregas.</p>
+    <div class="row"><input id="apiUrl" value="https://eurocompra-api.eurocompra2.workers.dev" aria-label="API"><input id="adminKey" type="password" placeholder="Chave administrativa"><button id="entrar">Entrar</button></div>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div class="box hidden" id="appBox">
+    <div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin-bottom:5px">Clientes e entregas</h1><span class="muted" id="contador"></span></div><div><button id="atualizar">Atualizar</button> <button class="logout" id="sair">Sair</button></div></div>
+    <div class="row"><input id="filtro" placeholder="Pesquisar por nome, código, e-mail ou WhatsApp"><select id="filtroStatus"><option value="">Todos os status</option><option>Cadastro recebido</option><option>Pagamento</option><option>Compra realizada</option><option>Recebido na Bélgica</option><option>Preparando</option><option>Enviado</option><option>Entregue</option></select></div>
+    <div class="table-wrap"><table><thead><tr><th>Código</th><th>Cliente</th><th>Contato</th><th>Endereço</th><th>Serviço / produto</th><th>Status</th><th>Atualizado</th></tr></thead><tbody id="lista"></tbody></table></div>
+    <div id="appMsg"></div>
+  </div>
+</div>
+<script>
+const statuses=["Cadastro recebido","Pagamento","Compra realizada","Recebido na Bélgica","Preparando","Enviado","Entregue"];
+let clientes=[]; let token="";
+const $=id=>document.getElementById(id);
+function msg(el,text,cls='error'){el.className=cls;el.textContent=text;}
+async function carregar(){
+  const base=$('apiUrl').value.replace(/\/$/,'');
+  const r=await fetch(base+'/api/admin/cadastros',{headers:{Authorization:'Bearer '+token}});
+  const d=await r.json(); if(!r.ok||!d.ok) throw new Error(d.message||'Não autorizado');
+  clientes=d.clientes||[]; render(); $('contador').textContent=clientes.length+' cadastro(s)';
+}
+function render(){
+  const q=$('filtro').value.toLowerCase().trim(); const st=$('filtroStatus').value;
+  const rows=clientes.filter(c=>{const text=[c.codigo,c.nome,c.email,c.whatsapp].join(' ').toLowerCase();return (!q||text.includes(q))&&(!st||c.status===st)});
+  $('lista').innerHTML=rows.map(c=>`<tr><td><span class="code">${esc(c.codigo)}</span><br><small>${esc(c.criado_em)}</small></td><td><strong>${esc(c.nome)}</strong><br>CPF: ${esc(maskCpf(c.cpf||''))}</td><td>${esc(c.email)}<br>${esc(c.whatsapp)}</td><td class="details">${esc([c.endereco,c.numero,c.complemento,c.bairro,c.cidade,c.estado,c.cep,c.pais].filter(Boolean).join(', '))}</td><td>${esc(c.servico)}<br>${esc(c.produto||'')}</td><td><select class="status" data-code="${esc(c.codigo)}">${statuses.map(s=>`<option ${s===c.status?'selected':''}>${esc(s)}</option>`).join('')}</select></td><td>${esc(c.atualizado_em||c.criado_em)}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum cadastro encontrado.</td></tr>';
+  document.querySelectorAll('.status').forEach(s=>s.addEventListener('change',async()=>{await alterarStatus(s.dataset.code,s.value)}));
+}
+async function alterarStatus(codigo,status){
+  try{const base=$('apiUrl').value.replace(/\/$/,'');const r=await fetch(base+'/api/admin/status',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({codigo,status})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.message||'Erro');const c=clientes.find(x=>x.codigo===codigo);if(c){c.status=status;c.atualizado_em=new Date().toISOString()}msg($('appMsg'),'Status atualizado com sucesso.','success');}catch(e){msg($('appMsg'),e.message)}
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function maskCpf(v){const x=String(v).replace(/\D/g,'');return x.length===11?x.slice(0,3)+'.'+x.slice(3,6)+'.'+x.slice(6,9)+'-'+x.slice(9):v}
+$('entrar').onclick=async()=>{token=$('adminKey').value.trim();if(!token)return msg($('loginMsg'),'Informe a chave administrativa.');try{await carregar();$('loginBox').classList.add('hidden');$('appBox').classList.remove('hidden');$('adminKey').value='';}catch(e){token='';msg($('loginMsg'),e.message)}};
+$('atualizar').onclick=()=>carregar().catch(e=>msg($('appMsg'),e.message));
+$('sair').onclick=()=>{token='';clientes=[];$('appBox').classList.add('hidden');$('loginBox').classList.remove('hidden')};
+$('filtro').oninput=render;$('filtroStatus').onchange=render;
+</script>
+</body>
+</html>
