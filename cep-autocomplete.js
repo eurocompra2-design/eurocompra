@@ -44,7 +44,7 @@
 
       if (endereco) endereco.value = dados.logradouro || dados.street || '';
       if (bairro) bairro.value = dados.bairro || dados.neighborhood || '';
-      if (cidade) cidade.value = dados.localidade || dados.city || '';
+      if (cidade) cidade.value = dados.localidade || dados.city || '');
       if (estado) estado.value = dados.uf || dados.state || '';
 
       cep.setCustomValidity('');
@@ -53,14 +53,12 @@
       if (numero) numero.focus();
     } catch (erro) {
       console.error('Erro ao consultar CEP:', erro);
-      // Não bloqueia o cadastro se o serviço externo estiver indisponível.
       cep.setCustomValidity('');
     } finally {
       cep.dataset.cepConsultando = '0';
     }
   }
 
-  // Delegação de eventos: funciona mesmo que o formulário seja clonado/substituído.
   document.addEventListener('input', function (event) {
     if (event.target && event.target.id === 'cep') {
       const valor = event.target.value.replace(/\D/g, '');
@@ -76,7 +74,6 @@
 })();
 
 // EuroCompra — envio definitivo do cadastro.
-// Clonamos o formulário para remover listeners antigos que ainda possam existir no index.html.
 (function () {
   const original = document.getElementById('cadastroForm');
   if (!original) return;
@@ -173,7 +170,6 @@
       const mensagem = erro.name === 'AbortError'
         ? 'O servidor demorou para responder. Tente novamente em alguns segundos.'
         : (erro.message || 'Não foi possível enviar o cadastro.');
-      // Em qualquer erro, o formulário e todos os dados permanecem na tela.
       mostrarMensagem(`Não foi possível enviar o cadastro: ${mensagem}`);
     } finally {
       enviando = false;
@@ -184,4 +180,42 @@
       }
     }
   });
+})();
+
+// EuroCompra — buscador funcional integrado à página inicial.
+// O buscador completo continua em /buscador.html e é exibido aqui de forma integrada.
+(function () {
+  function adicionarBuscador() {
+    if (document.getElementById('eurocompra-buscador-home')) return;
+
+    const hero = document.querySelector('section.hero');
+    if (!hero) return;
+
+    const section = document.createElement('section');
+    section.id = 'eurocompra-buscador-home';
+    section.style.cssText = 'background:#f5f7fb;padding:55px 0;border-top:1px solid #e2e7f0;border-bottom:1px solid #e2e7f0;';
+    section.innerHTML = `
+      <div class="container">
+        <div style="text-align:center;max-width:760px;margin:0 auto 25px;">
+          <span style="display:inline-flex;padding:7px 12px;border-radius:50px;background:#eaf1ff;color:#063b9e;font-size:13px;font-weight:700;margin-bottom:12px;">🔎 CONSULTE ANTES DE COMPRAR</span>
+          <h2 style="font-size:34px;line-height:1.15;color:#06245c;margin-bottom:10px;">Seu produto pode ser enviado para o Brasil?</h2>
+          <p style="color:#667085;margin:0;">Pesquise produto, marca ou modelo. O buscador mostra uma orientação inicial e explica o que precisa ser verificado antes da compra.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e7f0;border-radius:20px;box-shadow:0 18px 50px rgba(6,59,158,.10);overflow:hidden;">
+          <iframe src="buscador.html" title="Buscador de produtos EuroCompra" loading="lazy" style="display:block;width:100%;height:720px;border:0;background:#f5f8ff;"></iframe>
+        </div>
+        <div style="text-align:center;margin-top:16px;">
+          <a href="buscador.html" style="color:#063b9e;font-weight:700;font-size:14px;">Abrir buscador em página completa →</a>
+        </div>
+      </div>
+    `;
+
+    hero.insertAdjacentElement('afterend', section);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adicionarBuscador);
+  } else {
+    adicionarBuscador();
+  }
 })();
