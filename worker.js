@@ -1,3 +1,6 @@
+// EuroCompra Worker — versão publicada para envio D1 + Resend
+const DEPLOY_VERSION = "2026-08-12-email-resend";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://eurocompra2-design.github.io",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -49,6 +52,7 @@ function validarCPF(cpf) {
 
 async function enviarEmail(env, cliente) {
   if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL || !env.RESEND_FROM) {
+    console.error("Resend não configurado: falta RESEND_API_KEY, ADMIN_EMAIL ou RESEND_FROM.");
     return false;
   }
 
@@ -84,7 +88,14 @@ async function enviarEmail(env, cliente) {
     }),
   });
 
-  return resposta.ok;
+  const corpo = await resposta.text();
+  if (!resposta.ok) {
+    console.error("Resend recusou o e-mail:", resposta.status, corpo);
+    return false;
+  }
+
+  console.log("Resend aceitou o e-mail:", corpo);
+  return true;
 }
 
 export default {
@@ -96,7 +107,7 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
-      return json({ ok: true, service: "EuroCompra API", status: "online" });
+      return json({ ok: true, service: "EuroCompra API", status: "online", version: DEPLOY_VERSION });
     }
 
     // Mantido para futura integração com WhatsApp/Meta. O sistema não depende dela.
