@@ -1,0 +1,51 @@
+name: Ativar preenchimento automático do CEP
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  ativar-cep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ligar script do CEP ao site
+        shell: bash
+        run: |
+          set -e
+          if grep -q 'cep-autocomplete.js' index.html; then
+            echo 'Script do CEP já está ligado.'
+            exit 0
+          fi
+
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marcador = '</body>'
+          tag = '  <script src="cep-autocomplete.js"></script>\n'
+          if marcador not in s:
+              raise SystemExit('Não encontrei </body> no index.html')
+          s = s.replace(marcador, tag + marcador, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Salvar alteração
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'Nenhuma alteração necessária.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Ativar preenchimento automático do CEP'
+          git push
