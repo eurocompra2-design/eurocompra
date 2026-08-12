@@ -53,14 +53,31 @@
   const message = document.getElementById('formMessage');
   if (!message) return;
 
-  const corrigirMensagem = () => {
+  const observer = new MutationObserver(() => {
     const texto = message.textContent || '';
     if (texto.toLowerCase().includes('whatsapp')) {
-      message.textContent = 'Cadastro recebido com sucesso! Seus dados foram salvos com segurança. Em breve entraremos em contato pelos dados informados.';
+      message.textContent = 'Cadastro enviado com sucesso! Seus dados foram salvos com segurança.';
     }
-  };
 
-  new MutationObserver(corrigirMensagem).observe(message, {
+    if (texto.toLowerCase().includes('cadastro enviado com sucesso')) {
+      observer.disconnect();
+      const formBox = message.closest('.form-box');
+      if (!formBox) return;
+
+      // Mostra a confirmação por um instante e depois fecha o formulário.
+      setTimeout(() => {
+        formBox.innerHTML = `
+          <div style="text-align:center; padding:35px 10px;">
+            <div style="font-size:52px; margin-bottom:14px;">✅</div>
+            <h2 style="color:#06245c; margin-bottom:10px;">Cadastro enviado!</h2>
+            <p style="color:#667085;">Recebemos seus dados com segurança. Em breve entraremos em contato.</p>
+          </div>
+        `;
+      }, 1200);
+    }
+  });
+
+  observer.observe(message, {
     childList: true,
     characterData: true,
     subtree: true
