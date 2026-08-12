@@ -29,7 +29,6 @@
       });
 
       if (!resposta.ok) throw new Error('Falha na consulta do CEP');
-
       const dados = await resposta.json();
 
       if (dados.erro) {
@@ -45,7 +44,6 @@
       if (fields.estado) fields.estado.value = dados.uf || '';
 
       cep.setCustomValidity('');
-
       const numero = document.getElementById('numero');
       if (numero) numero.focus();
     } catch (erro) {
@@ -63,19 +61,22 @@
   });
 })();
 
-// EuroCompra — envio robusto do cadastro.
-// O listener fica no DOCUMENTO, em captura, para executar antes de qualquer
-// listener antigo do index.html. Assim o formulário não pode ser interceptado
-// pelo código antigo nem mostrar uma mensagem genérica.
+// EuroCompra — envio definitivo do cadastro.
+// Clonamos o formulário para remover listeners antigos que ainda possam existir
+// no index.html. Assim somente este fluxo controla o envio.
 (function () {
-  const form = document.getElementById('cadastroForm');
-  const message = document.getElementById('formMessage');
-  if (!form || !message) return;
+  const original = document.getElementById('cadastroForm');
+  if (!original) return;
 
+  const form = original.cloneNode(true);
+  original.replaceWith(form);
+
+  const message = document.getElementById('formMessage');
   const API_URL = 'https://eurocompra-api.eurocompra2.workers.dev/api/cadastro';
   let enviando = false;
 
   function mostrarMensagem(texto, sucesso = false) {
+    if (!message) return;
     message.textContent = texto;
     message.style.display = 'block';
     message.style.background = sucesso ? '#eaf8f0' : '#fff4e5';
@@ -83,7 +84,7 @@
     message.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  function fecharFormulario(codigo) {
+  function mostrarSucesso(codigo) {
     const formBox = form.closest('.form-box');
     if (!formBox) return;
 
@@ -100,11 +101,7 @@
     }, 1200);
   }
 
-  // Document + capture executa antes do listener do formulário registrado
-  // diretamente no index.html.
-  document.addEventListener('submit', async function (event) {
-    if (event.target !== form) return;
-
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
     event.stopImmediatePropagation();
 
@@ -146,7 +143,6 @@
 
       const texto = await resposta.text();
       let resultado;
-
       try {
         resultado = JSON.parse(texto);
       } catch {
@@ -160,9 +156,8 @@
       const codigo = resultado.codigo || '';
       mostrarMensagem(`Cadastro enviado com sucesso! Código: ${codigo || 'recebido'}.`, true);
 
-      // Só limpamos e fechamos depois que a API confirmou ok:true.
-      form.reset();
-      fecharFormulario(codigo);
+      // Só fechamos depois da confirmação real da API.
+      mostrarSucesso(codigo);
     } catch (erro) {
       console.error('Erro no envio do cadastro:', erro);
 
@@ -170,6 +165,7 @@
         ? 'O servidor demorou para responder. Tente novamente em alguns segundos.'
         : (erro.message || 'Não foi possível enviar o cadastro.');
 
+      // Em qualquer erro, o formulário e todos os dados permanecem na tela.
       mostrarMensagem(`Não foi possível enviar o cadastro: ${mensagem}`);
     } finally {
       enviando = false;
@@ -179,5 +175,5 @@
         botao.style.opacity = '1';
       }
     }
-  }, true);
+  });
 })();
