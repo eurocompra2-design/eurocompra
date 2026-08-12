@@ -52,6 +52,7 @@
             <tr>
               <th>Código</th>
               <th>Nome</th>
+              <th>CPF</th>
               <th>E-mail</th>
               <th>WhatsApp</th>
               <th>CEP</th>
@@ -121,6 +122,7 @@ function render(items){
   document.getElementById('clientes').innerHTML=items.map(c=>`<tr>
     <td>${esc(c.codigo)}</td>
     <td>${esc(c.nome)}</td>
+    <td>${esc(c.cpf)}</td>
     <td>${esc(c.email)}</td>
     <td>${esc(c.whatsapp)}</td>
     <td>${esc(c.cep)}</td>
