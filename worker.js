@@ -47,6 +47,46 @@ function validarCPF(cpf) {
   return resto === Number(cpf[10]);
 }
 
+async function enviarEmail(env, cliente) {
+  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL || !env.RESEND_FROM) {
+    return false;
+  }
+
+  const resposta = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: env.RESEND_FROM,
+      to: [env.ADMIN_EMAIL],
+      subject: `🛒 Novo cadastro EuroCompra - ${cliente.codigo}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033">
+          <h2 style="color:#063b9e">🛒 Novo cadastro - EuroCompra</h2>
+          <p><strong>Código:</strong> ${cliente.codigo}</p>
+          <p><strong>Nome:</strong> ${cliente.nome}</p>
+          <p><strong>E-mail:</strong> ${cliente.email}</p>
+          <p><strong>WhatsApp:</strong> ${cliente.whatsapp}</p>
+          <p><strong>CPF:</strong> ***${cliente.cpf.slice(-4)}</p>
+          <p><strong>Endereço:</strong> ${cliente.endereco}, ${cliente.numero}${cliente.complemento ? ` - ${cliente.complemento}` : ""}</p>
+          <p><strong>Bairro:</strong> ${cliente.bairro}</p>
+          <p><strong>Cidade/UF:</strong> ${cliente.cidade}/${cliente.estado}</p>
+          <p><strong>CEP:</strong> ${cliente.cep}</p>
+          <p><strong>Serviço:</strong> ${cliente.servico}</p>
+          ${cliente.produto ? `<p><strong>Produto:</strong> ${cliente.produto}</p>` : ""}
+          ${cliente.observacoes ? `<p><strong>Observações:</strong> ${cliente.observacoes}</p>` : ""}
+          <hr>
+          <p>O cadastro foi salvo no sistema.</p>
+        </div>
+      `,
+    }),
+  });
+
+  return resposta.ok;
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -55,12 +95,11 @@ export default {
 
     const url = new URL(request.url);
 
-    // Status da API
     if (request.method === "GET" && url.pathname === "/") {
       return json({ ok: true, service: "EuroCompra API", status: "online" });
     }
 
-    // Verificação do webhook do WhatsApp
+    // Mantido para futura integração com WhatsApp/Meta. O sistema não depende dela.
     if (request.method === "GET" && url.pathname === "/webhook") {
       const mode = url.searchParams.get("hub.mode");
       const token = url.searchParams.get("hub.verify_token");
@@ -73,7 +112,6 @@ export default {
       return new Response("Token inválido", { status: 403, headers: corsHeaders });
     }
 
-    // Cadastro do cliente
     if (request.method === "POST" && url.pathname === "/api/cadastro") {
       try {
         const data = await request.json();
@@ -119,28 +157,26 @@ export default {
             produto, observacoes, status, criado_em, atualizado_em
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
         `).bind(
-          codigo,
-          nome,
-          cpf,
-          whatsapp,
-          email,
-          cep,
-          pais,
-          endereco,
-          numero,
-          complemento,
-          bairro,
-          cidade,
-          estado,
-          servico,
-          produto,
-          observacoes,
-          "Cadastro recebido"
+          codigo, nome, cpf, whatsapp, email, cep, pais, endereco,
+          numero, complemento, bairro, cidade, estado, servico,
+          produto, observacoes, "Cadastro recebido"
         ).run();
 
-        // WhatsApp é secundário: o cadastro já fica salvo no D1 mesmo que o envio falhe.
-        let whatsappEnviado = false;
+        const cliente = {
+          codigo, nome, email, cpf, whatsapp, cep, endereco, numero,
+          complemento, bairro, cidade, estado, servico, produto, observacoes,
+        };
 
+        // E-mail é opcional: o cadastro nunca deixa de ser salvo se o e-mail falhar.
+        let emailEnviado = false;
+        try {
+          emailEnviado = await enviarEmail(env, cliente);
+        } catch (erro) {
+          console.error("Erro e-mail:", erro);
+        }
+
+        // WhatsApp continua opcional e independente do cadastro/e-mail.
+        let whatsappEnviado = false;
         if (env.META_ACCESS_TOKEN && env.META_PHONE_NUMBER_ID && env.META_ADMIN_PHONE) {
           try {
             const resposta = await fetch(
@@ -172,6 +208,7 @@ export default {
         return json({
           ok: true,
           codigo,
+          emailEnviado,
           whatsappEnviado,
           message: "Cadastro recebido com segurança.",
         });
@@ -181,7 +218,6 @@ export default {
       }
     }
 
-    // Consulta administrativa. Configure ADMIN_VIEW_TOKEN nos Secrets do Worker.
     if (request.method === "GET" && url.pathname === "/api/clientes") {
       const adminToken = request.headers.get("X-Admin-Token");
 
