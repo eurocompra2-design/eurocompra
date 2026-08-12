@@ -1,0 +1,48 @@
+// EuroCompra — preenchimento automático do endereço pelo CEP brasileiro.
+(function () {
+  const cep = document.getElementById('cep');
+  if (!cep) return;
+  const fields = {
+    endereco: document.getElementById('endereco'),
+    bairro: document.getElementById('bairro'),
+    cidade: document.getElementById('cidade'),
+    estado: document.getElementById('estado')
+  };
+  function limparEndereco() {
+    Object.values(fields).forEach((field) => { if (field) field.value = ''; });
+  }
+  async function buscarCEP() {
+    const valor = cep.value.replace(/\D/g, '');
+    if (valor.length !== 8) return;
+    cep.setCustomValidity('');
+    cep.disabled = true;
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${valor}/json/`, { headers: { Accept: 'application/json' } });
+      if (!resposta.ok) throw new Error('Falha na consulta do CEP');
+      const dados = await resposta.json();
+      if (dados.erro) {
+        limparEndereco();
+        cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
+        cep.reportValidity();
+        return;
+      }
+      if (fields.endereco) fields.endereco.value = dados.logradouro || '';
+      if (fields.bairro) fields.bairro.value = dados.bairro || '';
+      if (fields.cidade) fields.cidade.value = dados.localidade || '';
+      if (fields.estado) fields.estado.value = dados.uf || '';
+      cep.setCustomValidity('');
+      const numero = document.getElementById('numero');
+      if (numero) numero.focus();
+    } catch (erro) {
+      console.error('Erro ao consultar CEP:', erro);
+      cep.setCustomValidity('Não foi possível consultar o CEP agora. Tente novamente.');
+    } finally {
+      cep.disabled = false;
+    }
+  }
+  cep.addEventListener('blur', buscarCEP);
+  cep.addEventListener('input', function () {
+    const valor = this.value.replace(/\D/g, '');
+    if (valor.length === 8) buscarCEP();
+  });
+})();
