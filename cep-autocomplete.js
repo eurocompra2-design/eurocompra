@@ -64,9 +64,9 @@
 })();
 
 // EuroCompra — envio robusto do cadastro.
-// Usa a fase de captura para impedir que o código antigo do index.html
-// assuma o controle do formulário. Também mostra o erro real, aplica
-// timeout e fecha o formulário após um envio confirmado.
+// O listener fica no DOCUMENTO, em captura, para executar antes de qualquer
+// listener antigo do index.html. Assim o formulário não pode ser interceptado
+// pelo código antigo nem mostrar uma mensagem genérica.
 (function () {
   const form = document.getElementById('cadastroForm');
   const message = document.getElementById('formMessage');
@@ -100,7 +100,11 @@
     }, 1200);
   }
 
-  form.addEventListener('submit', async function (event) {
+  // Document + capture executa antes do listener do formulário registrado
+  // diretamente no index.html.
+  document.addEventListener('submit', async function (event) {
+    if (event.target !== form) return;
+
     event.preventDefault();
     event.stopImmediatePropagation();
 
@@ -156,6 +160,7 @@
       const codigo = resultado.codigo || '';
       mostrarMensagem(`Cadastro enviado com sucesso! Código: ${codigo || 'recebido'}.`, true);
 
+      // Só limpamos e fechamos depois que a API confirmou ok:true.
       form.reset();
       fecharFormulario(codigo);
     } catch (erro) {
