@@ -50,18 +50,22 @@
         <table>
           <thead>
             <tr>
-              <th>Código</th>
-              <th>Nome</th>
-              <th>CPF</th>
-              <th>E-mail</th>
-              <th>WhatsApp</th>
-              <th>CEP</th>
-              <th>Cidade</th>
-              <th>Estado</th>
-              <th>Serviço</th>
-              <th>Produto</th>
-              <th>Status</th>
-              <th>Data</th>
+            <th>Código</th>
+<th>Nome</th>
+<th>CPF</th>
+<th>E-mail</th>
+<th>WhatsApp</th>
+<th>CEP</th>
+<th>Endereço</th>
+<th>Número</th>
+<th>Complemento</th>
+<th>Bairro</th>
+<th>Cidade</th>
+<th>Estado</th>
+<th>Serviço</th>
+<th>Produto</th>
+<th>Status</th>
+<th>Data</th>
             </tr>
           </thead>
           <tbody id="clientes"></tbody>
@@ -119,6 +123,7 @@ document.getElementById('token').addEventListener('keydown',e=>{
 
 function render(items){
   statusEl.textContent=items.length+' cadastro(s) encontrado(s).';
+
   document.getElementById('clientes').innerHTML=items.map(c=>`<tr>
     <td>${esc(c.codigo)}</td>
     <td>${esc(c.nome)}</td>
@@ -126,6 +131,10 @@ function render(items){
     <td>${esc(c.email)}</td>
     <td>${esc(c.whatsapp)}</td>
     <td>${esc(c.cep)}</td>
+    <td>${esc(c.endereco)}</td>
+    <td>${esc(c.numero)}</td>
+    <td>${esc(c.complemento)}</td>
+    <td>${esc(c.bairro)}</td>
     <td>${esc(c.cidade)}</td>
     <td>${esc(c.estado)}</td>
     <td>${esc(c.servico)}</td>
@@ -134,7 +143,6 @@ function render(items){
     <td>${esc(c.criado_em)}</td>
   </tr>`).join('');
 }
-
 function esc(v){
   return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
