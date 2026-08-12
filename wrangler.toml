@@ -1,0 +1,8 @@
+name = "eurocompra-api"
+main = "worker.js"
+compatibility_date = "2026-08-12"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "eurocompra-clientes"
+database_id = "fb5b4088-1764-4c4b-99a2-4c6b3eb7599e"
