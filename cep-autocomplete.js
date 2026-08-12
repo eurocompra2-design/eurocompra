@@ -1,95 +1,82 @@
 // EuroCompra — preenchimento automático do endereço pelo CEP brasileiro.
 (function () {
-  function iniciarCEP() {
-    const cep = document.getElementById('cep');
-    if (!cep || cep.dataset.cepAtivo === '1') return;
-
-    const fields = {
-      endereco: document.getElementById('endereco'),
-      bairro: document.getElementById('bairro'),
-      cidade: document.getElementById('cidade'),
-      estado: document.getElementById('estado')
-    };
-
-    if (!fields.endereco || !fields.bairro || !fields.cidade || !fields.estado) return;
-    cep.dataset.cepAtivo = '1';
-
-    function limparEndereco() {
-      Object.values(fields).forEach((field) => {
-        if (field) field.value = '';
+  async function consultar(url) {
+    const controlador = new AbortController();
+    const timeout = setTimeout(() => controlador.abort(), 8000);
+    try {
+      const resposta = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: controlador.signal,
+        cache: 'no-store'
       });
+      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+      return await resposta.json();
+    } finally {
+      clearTimeout(timeout);
     }
+  }
 
-    async function consultar(url) {
-      const controlador = new AbortController();
-      const timeout = setTimeout(() => controlador.abort(), 8000);
+  async function buscarCEP(cep) {
+    const valor = cep.value.replace(/\D/g, '');
+    if (valor.length !== 8 || cep.dataset.cepConsultando === '1') return;
+
+    cep.dataset.cepConsultando = '1';
+    cep.setCustomValidity('');
+
+    try {
+      let dados;
+
       try {
-        const resposta = await fetch(url, {
-          headers: { Accept: 'application/json' },
-          signal: controlador.signal,
-          cache: 'no-store'
-        });
-        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-        return await resposta.json();
-      } finally {
-        clearTimeout(timeout);
+        dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`);
+      } catch (erro) {
+        dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`);
       }
-    }
 
-    async function buscarCEP() {
-      const valor = cep.value.replace(/\D/g, '');
-      if (valor.length !== 8) return;
+      if (dados.erro) {
+        cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
+        return;
+      }
+
+      const endereco = document.getElementById('endereco');
+      const bairro = document.getElementById('bairro');
+      const cidade = document.getElementById('cidade');
+      const estado = document.getElementById('estado');
+
+      if (endereco) endereco.value = dados.logradouro || dados.street || '';
+      if (bairro) bairro.value = dados.bairro || dados.neighborhood || '';
+      if (cidade) cidade.value = dados.localidade || dados.city || '';
+      if (estado) estado.value = dados.uf || dados.state || '';
 
       cep.setCustomValidity('');
 
-      try {
-        let dados;
-
-        try {
-          dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`);
-        } catch (erroViaCep) {
-          dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`);
-        }
-
-        if (dados.erro) {
-          limparEndereco();
-          cep.setCustomValidity('CEP não encontrado. Confira o número informado.');
-          cep.reportValidity();
-          return;
-        }
-
-        fields.endereco.value = dados.logradouro || dados.street || '';
-        fields.bairro.value = dados.bairro || dados.neighborhood || '';
-        fields.cidade.value = dados.localidade || dados.city || '';
-        fields.estado.value = dados.uf || dados.state || '';
-        cep.setCustomValidity('');
-
-        const numero = document.getElementById('numero');
-        if (numero) numero.focus();
-      } catch (erro) {
-        console.error('Erro ao consultar CEP:', erro);
-        cep.setCustomValidity('');
-      }
+      const numero = document.getElementById('numero');
+      if (numero) numero.focus();
+    } catch (erro) {
+      console.error('Erro ao consultar CEP:', erro);
+      // Não bloqueia o cadastro se o serviço externo estiver indisponível.
+      cep.setCustomValidity('');
+    } finally {
+      cep.dataset.cepConsultando = '0';
     }
-
-    cep.addEventListener('blur', buscarCEP);
-    cep.addEventListener('input', function () {
-      const valor = this.value.replace(/\D/g, '');
-      if (valor.length === 8) buscarCEP();
-    });
   }
 
-  // O index.html clona o formulário para substituir listeners antigos.
-  // Precisamos conectar o CEP também ao formulário clonado.
-  iniciarCEP();
-  setTimeout(iniciarCEP, 100);
-  setTimeout(iniciarCEP, 500);
-  setTimeout(iniciarCEP, 1000);
+  // Delegação de eventos: funciona mesmo que o formulário seja clonado/substituído.
+  document.addEventListener('input', function (event) {
+    if (event.target && event.target.id === 'cep') {
+      const valor = event.target.value.replace(/\D/g, '');
+      if (valor.length === 8) buscarCEP(event.target);
+    }
+  });
+
+  document.addEventListener('blur', function (event) {
+    if (event.target && event.target.id === 'cep') {
+      buscarCEP(event.target);
+    }
+  }, true);
 })();
 
 // EuroCompra — envio definitivo do cadastro.
-// Clonamos o formulário para remover listeners antigos que ainda possam existir
-// no index.html. Assim somente este fluxo controla o envio.
+// Clonamos o formulário para remover listeners antigos que ainda possam existir no index.html.
 (function () {
   const original = document.getElementById('cadastroForm');
   if (!original) return;
@@ -132,7 +119,6 @@
     event.stopImmediatePropagation();
 
     if (enviando) return;
-
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -181,16 +167,12 @@
 
       const codigo = resultado.codigo || '';
       mostrarMensagem(`Cadastro enviado com sucesso! Código: ${codigo || 'recebido'}.`, true);
-
-      // Só fechamos depois da confirmação real da API.
       mostrarSucesso(codigo);
     } catch (erro) {
       console.error('Erro no envio do cadastro:', erro);
-
       const mensagem = erro.name === 'AbortError'
         ? 'O servidor demorou para responder. Tente novamente em alguns segundos.'
         : (erro.message || 'Não foi possível enviar o cadastro.');
-
       // Em qualquer erro, o formulário e todos os dados permanecem na tela.
       mostrarMensagem(`Não foi possível enviar o cadastro: ${mensagem}`);
     } finally {
