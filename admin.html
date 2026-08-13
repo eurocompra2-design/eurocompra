@@ -13,13 +13,16 @@
     input{flex:1;min-width:260px}
     button{background:#063b9e;color:#fff;font-weight:700;cursor:pointer}
     button.secondary{background:#fff;color:#063b9e;border-color:#063b9e}
+    button.danger{background:#b42318;border-color:#b42318}
+    button:disabled{opacity:.6;cursor:not-allowed}
     table{width:100%;border-collapse:collapse;margin-top:20px}
     th,td{text-align:left;padding:10px;border-bottom:1px solid #eee;white-space:nowrap}
     .app{display:none}
     .erro{color:#b42318}
+    .sucesso{color:#067647}
     .info{color:#667085;font-size:14px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
-    @media(max-width:700px){.wrap{margin:15px auto;padding:12px}.box{padding:18px}}
+    @media(max-width:700px){.wrap{margin:15px auto;padding:12px}.box{padding:18px}th,td{font-size:13px;padding:8px}}
   </style>
 </head>
 <body>
@@ -50,22 +53,23 @@
         <table>
           <thead>
             <tr>
-            <th>Código</th>
-<th>Nome</th>
-<th>CPF</th>
-<th>E-mail</th>
-<th>WhatsApp</th>
-<th>CEP</th>
-<th>Endereço</th>
-<th>Número</th>
-<th>Complemento</th>
-<th>Bairro</th>
-<th>Cidade</th>
-<th>Estado</th>
-<th>Serviço</th>
-<th>Produto</th>
-<th>Status</th>
-<th>Data</th>
+              <th>Código</th>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>E-mail</th>
+              <th>WhatsApp</th>
+              <th>CEP</th>
+              <th>Endereço</th>
+              <th>Número</th>
+              <th>Complemento</th>
+              <th>Bairro</th>
+              <th>Cidade</th>
+              <th>Estado</th>
+              <th>Serviço</th>
+              <th>Produto</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Ação</th>
             </tr>
           </thead>
           <tbody id="clientes"></tbody>
@@ -91,6 +95,7 @@ async function carregarClientes(){
     render(d.clientes||[]);
   }catch(e){
     statusEl.textContent='';
+    erro.className='erro';
     erro.textContent=e.message||'Não foi possível carregar os clientes.';
     authToken='';
     app.style.display='none';
@@ -101,7 +106,7 @@ async function carregarClientes(){
 document.getElementById('entrar').onclick=async()=>{
   const token=document.getElementById('token').value.trim();
   erro.textContent='';
-  if(!token){erro.textContent='Informe o token administrativo.';return;}
+  if(!token){erro.className='erro';erro.textContent='Informe o token administrativo.';return;}
   authToken=token;
   await carregarClientes();
   if(authToken){login.style.display='none';app.style.display='block';}
@@ -120,6 +125,32 @@ document.getElementById('sair').onclick=()=>{
 document.getElementById('token').addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById('entrar').click();
 });
+
+async function apagarCliente(codigo, botao){
+  const confirmado=confirm(`Tem certeza que deseja apagar o cadastro ${codigo}?\n\nEsta ação é permanente e não poderá ser desfeita.`);
+  if(!confirmado) return;
+
+  botao.disabled=true;
+  botao.textContent='Apagando...';
+
+  try{
+    const r=await fetch(API+'/api/clientes?codigo='+encodeURIComponent(codigo),{
+      method:'DELETE',
+      headers:{'X-Admin-Token':authToken,'Accept':'application/json'}
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.message||'Não foi possível apagar o cadastro.');
+
+    erro.className='sucesso';
+    erro.textContent='Cadastro '+codigo+' apagado com sucesso.';
+    await carregarClientes();
+  }catch(e){
+    erro.className='erro';
+    erro.textContent=e.message||'Não foi possível apagar o cadastro.';
+    botao.disabled=false;
+    botao.textContent='Apagar';
+  }
+}
 
 function render(items){
   statusEl.textContent=items.length+' cadastro(s) encontrado(s).';
@@ -141,10 +172,16 @@ function render(items){
     <td>${esc(c.produto)}</td>
     <td>${esc(c.status)}</td>
     <td>${esc(c.criado_em)}</td>
+    <td><button class="danger" type="button" onclick="apagarCliente('${js(c.codigo)}',this)">Apagar</button></td>
   </tr>`).join('');
 }
+
 function esc(v){
-  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function js(v){
+  return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 }
 </script>
 </body>
