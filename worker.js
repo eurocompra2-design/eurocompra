@@ -56,6 +56,22 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+function enderecoEuroCompra() {
+  return {
+    nome: "EUROCOMPRA",
+    aosCuidados: "Rodrigo ou Viviane",
+    endereco: "Ninoofsesteenweg 159",
+    localidade: "1700 Dilbeek",
+    pais: "Belgium",
+    texto: "EUROCOMPRA\nA/C Rodrigo ou Viviane\nNinoofsesteenweg 159\n1700 Dilbeek\nBelgium",
+  };
+}
+
+function mensagemAprovacao(codigo) {
+  const a = enderecoEuroCompra();
+  return `✅ CADASTRO APROVADO — EUROCOMPRA\n\nSeu código de cliente: ${codigo}\n\n📦 ENDEREÇO PARA RECEBIMENTO\n${a.texto}\n\n🔖 REFERÊNCIA OBRIGATÓRIA\n${codigo}\n\n⚠️ Sempre informe o código ${codigo} ao fazer uma compra para que possamos identificar sua encomenda quando ela chegar.\n\n🔐 Este endereço é privado e destinado exclusivamente ao seu cadastro EuroCompra.`;
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -212,6 +228,48 @@ export default {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/api/clientes/aprovar") {
+      const adminToken = request.headers.get("X-Admin-Token");
+      if (!env.ADMIN_VIEW_TOKEN || adminToken !== env.ADMIN_VIEW_TOKEN) {
+        return json({ ok: false, message: "Não autorizado." }, 401);
+      }
+
+      const codigo = clean(url.searchParams.get("codigo"));
+      if (!codigo) return json({ ok: false, message: "Código do cadastro não informado." }, 400);
+
+      try {
+        const cliente = await env.DB.prepare(
+          "SELECT codigo, nome, email, whatsapp, status FROM clientes WHERE codigo = ?"
+        ).bind(codigo).first();
+
+        if (!cliente) return json({ ok: false, message: "Cadastro não encontrado." }, 404);
+
+        await env.DB.prepare(
+          "UPDATE clientes SET status = ?, atualizado_em = datetime('now') WHERE codigo = ?"
+        ).bind("Aprovado", codigo).run();
+
+        const mensagem = mensagemAprovacao(codigo);
+        const whatsappNumeros = digits(cliente.whatsapp);
+        const whatsappLink = whatsappNumeros ? `https://wa.me/${whatsappNumeros}?text=${encodeURIComponent(mensagem)}` : null;
+
+        return json({
+          ok: true,
+          codigo,
+          nome: cliente.nome,
+          email: cliente.email,
+          whatsapp: cliente.whatsapp,
+          status: "Aprovado",
+          endereco: enderecoEuroCompra(),
+          mensagem,
+          whatsappLink,
+          message: "Cliente aprovado. O endereço privado está pronto para envio.",
+        });
+      } catch (erro) {
+        console.error("Erro ao aprovar cliente:", erro);
+        return json({ ok: false, message: "Não foi possível aprovar o cadastro." }, 500);
+      }
+    }
+
     if (request.method === "DELETE" && url.pathname === "/api/clientes") {
       const adminToken = request.headers.get("X-Admin-Token");
       if (!env.ADMIN_VIEW_TOKEN || adminToken !== env.ADMIN_VIEW_TOKEN) {
@@ -243,4 +301,4 @@ export default {
   },
 };
 
-// deploy: admin can securely delete clients by codigo
+// deploy: approval flow with private receiving address
