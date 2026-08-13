@@ -1,6 +1,6 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://eurocompra2-design.github.io",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token",
 };
 
@@ -164,20 +164,7 @@ export default {
                   type: "text",
                   text: {
                     preview_url: false,
-                    body: `🛒 NOVO CADASTRO - EUROCOMPRA
-
-🔖 Código: ${codigo}
-
-👤 Nome: ${nome}
-📧 E-mail: ${email}
-📱 WhatsApp: ${whatsapp}
-
-📍 Cidade/UF: ${cidade}/${estado}
-📦 Serviço: ${servico}
-
-📋 Status: Cadastro recebido
-
-O cadastro foi salvo no sistema EuroCompra.`,
+                    body: `🛒 NOVO CADASTRO - EUROCOMPRA\n\n🔖 Código: ${codigo}\n\n👤 Nome: ${nome}\n📧 E-mail: ${email}\n📱 WhatsApp: ${whatsapp}\n\n📍 Cidade/UF: ${cidade}/${estado}\n📦 Serviço: ${servico}\n\n📋 Status: Cadastro recebido\n\nO cadastro foi salvo no sistema EuroCompra.`,
                   },
                 }),
               }
@@ -225,8 +212,35 @@ O cadastro foi salvo no sistema EuroCompra.`,
       }
     }
 
+    if (request.method === "DELETE" && url.pathname === "/api/clientes") {
+      const adminToken = request.headers.get("X-Admin-Token");
+      if (!env.ADMIN_VIEW_TOKEN || adminToken !== env.ADMIN_VIEW_TOKEN) {
+        return json({ ok: false, message: "Não autorizado." }, 401);
+      }
+
+      const codigo = clean(url.searchParams.get("codigo"));
+      if (!codigo) {
+        return json({ ok: false, message: "Código do cadastro não informado." }, 400);
+      }
+
+      try {
+        const resultado = await env.DB.prepare(
+          "DELETE FROM clientes WHERE codigo = ?"
+        ).bind(codigo).run();
+
+        if (!resultado.meta || resultado.meta.changes !== 1) {
+          return json({ ok: false, message: "Cadastro não encontrado." }, 404);
+        }
+
+        return json({ ok: true, message: "Cadastro apagado com sucesso." });
+      } catch (erro) {
+        console.error("Erro ao apagar cliente:", erro);
+        return json({ ok: false, message: "Não foi possível apagar o cadastro." }, 500);
+      }
+    }
+
     return json({ ok: false, message: "Rota não encontrada." }, 404);
   },
 };
 
-// deploy: show CPF in admin client list
+// deploy: admin can securely delete clients by codigo
