@@ -169,3 +169,30 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', configurarCategoriasLojas); else configurarCategoriasLojas();
 })();
+
+// EuroCompra — conecta o botão Preços ao arquivo precos.html.
+(function () {
+  function adicionarBotaoPrecos() {
+    const nav = document.querySelector('header nav');
+    if (!nav || nav.querySelector('a[href="precos.html"]')) return;
+
+    const link = document.createElement('a');
+    link.href = 'precos.html';
+    link.className = 'btn btn-gold';
+    link.textContent = 'Preços';
+    link.setAttribute('aria-label', 'Ver preços da EuroCompra');
+
+    const cadastro = Array.from(nav.querySelectorAll('a')).find(function (item) {
+      return item.textContent.trim().toLowerCase() === 'cadastro';
+    });
+
+    if (cadastro) nav.insertBefore(link, cadastro);
+    else nav.appendChild(link);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adicionarBotaoPrecos);
+  } else {
+    adicionarBotaoPrecos();
+  }
+})();
