@@ -13,6 +13,7 @@
     input{flex:1;min-width:260px}
     button{background:#063b9e;color:#fff;font-weight:700;cursor:pointer}
     button.secondary{background:#fff;color:#063b9e;border-color:#063b9e}
+    button.success{background:#067647;border-color:#067647}
     button.danger{background:#b42318;border-color:#b42318}
     button:disabled{opacity:.6;cursor:not-allowed}
     table{width:100%;border-collapse:collapse;margin-top:20px}
@@ -22,6 +23,9 @@
     .sucesso{color:#067647}
     .info{color:#667085;font-size:14px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+    .endereco{background:#eef6ff;border:1px solid #cfe3ff;border-radius:14px;padding:18px;margin-top:18px;white-space:pre-line;display:none}
+    .endereco strong{display:block;margin-bottom:8px}
+    .acoes{display:flex;gap:8px;flex-wrap:wrap}
     @media(max-width:700px){.wrap{margin:15px auto;padding:12px}.box{padding:18px}th,td{font-size:13px;padding:8px}}
   </style>
 </head>
@@ -49,27 +53,17 @@
           <button id="sair" class="secondary">Sair</button>
         </div>
       </div>
+
+      <div id="resultadoAprovacao" class="endereco"></div>
+
       <div style="overflow:auto">
         <table>
           <thead>
             <tr>
-              <th>Código</th>
-              <th>Nome</th>
-              <th>CPF</th>
-              <th>E-mail</th>
-              <th>WhatsApp</th>
-              <th>CEP</th>
-              <th>Endereço</th>
-              <th>Número</th>
-              <th>Complemento</th>
-              <th>Bairro</th>
-              <th>Cidade</th>
-              <th>Estado</th>
-              <th>Serviço</th>
-              <th>Produto</th>
-              <th>Status</th>
-              <th>Data</th>
-              <th>Ação</th>
+              <th>Código</th><th>Nome</th><th>CPF</th><th>E-mail</th><th>WhatsApp</th>
+              <th>CEP</th><th>Endereço</th><th>Número</th><th>Complemento</th><th>Bairro</th>
+              <th>Cidade</th><th>Estado</th><th>Serviço</th><th>Produto</th><th>Status</th>
+              <th>Data</th><th>Ação</th>
             </tr>
           </thead>
           <tbody id="clientes"></tbody>
@@ -85,6 +79,7 @@ const login=document.getElementById('login');
 const app=document.getElementById('app');
 const erro=document.getElementById('erro');
 const statusEl=document.getElementById('status');
+const resultadoAprovacao=document.getElementById('resultadoAprovacao');
 
 async function carregarClientes(){
   statusEl.textContent='Carregando...';
@@ -120,27 +115,64 @@ document.getElementById('sair').onclick=()=>{
   app.style.display='none';
   login.style.display='block';
   erro.textContent='';
+  resultadoAprovacao.style.display='none';
 };
 
 document.getElementById('token').addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById('entrar').click();
 });
 
-async function apagarCliente(codigo, botao){
-  const confirmado=confirm(`Tem certeza que deseja apagar o cadastro ${codigo}?\n\nEsta ação é permanente e não poderá ser desfeita.`);
-  if(!confirmado) return;
-
+async function aprovarCliente(codigo,botao){
+  const confirmado=confirm(`Aprovar o cadastro ${codigo}?\n\nDepois da aprovação, o endereço privado da EuroCompra ficará pronto para envio ao cliente.`);
+  if(!confirmado)return;
   botao.disabled=true;
-  botao.textContent='Apagando...';
-
+  botao.textContent='Aprovando...';
   try{
-    const r=await fetch(API+'/api/clientes?codigo='+encodeURIComponent(codigo),{
-      method:'DELETE',
+    const r=await fetch(API+'/api/clientes/aprovar?codigo='+encodeURIComponent(codigo),{
+      method:'POST',
       headers:{'X-Admin-Token':authToken,'Accept':'application/json'}
     });
     const d=await r.json().catch(()=>({}));
-    if(!r.ok) throw new Error(d.message||'Não foi possível apagar o cadastro.');
+    if(!r.ok)throw new Error(d.message||'Não foi possível aprovar o cadastro.');
 
+    resultadoAprovacao.style.display='block';
+    resultadoAprovacao.innerHTML=`<strong>✅ Cliente aprovado — ${esc(d.nome)} (${esc(d.codigo)})</strong><div>${esc(d.mensagem)}</div><div class="acoes" style="margin-top:14px"><button class="success" type="button" onclick="abrirWhatsApp('${js(d.whatsappLink||'')}')" ${d.whatsappLink?'':'disabled'}>Enviar pelo WhatsApp</button><button class="secondary" type="button" onclick="copiarMensagem('${js(d.mensagem)}')">Copiar mensagem</button></div>`;
+    erro.className='sucesso';
+    erro.textContent='Cadastro aprovado com sucesso. O endereço foi liberado somente para envio ao cliente.';
+    await carregarClientes();
+  }catch(e){
+    erro.className='erro';
+    erro.textContent=e.message||'Não foi possível aprovar o cadastro.';
+    botao.disabled=false;
+    botao.textContent='Aprovar';
+  }
+}
+
+function abrirWhatsApp(link){
+  if(!link)return;
+  window.open(link,'_blank','noopener,noreferrer');
+}
+
+async function copiarMensagem(mensagem){
+  try{
+    await navigator.clipboard.writeText(mensagem);
+    erro.className='sucesso';
+    erro.textContent='Mensagem copiada. Agora você pode enviá-la ao cliente.';
+  }catch(e){
+    erro.className='erro';
+    erro.textContent='Não foi possível copiar automaticamente. Use o botão do WhatsApp.';
+  }
+}
+
+async function apagarCliente(codigo,botao){
+  const confirmado=confirm(`Tem certeza que deseja apagar o cadastro ${codigo}?\n\nEsta ação é permanente e não poderá ser desfeita.`);
+  if(!confirmado)return;
+  botao.disabled=true;
+  botao.textContent='Apagando...';
+  try{
+    const r=await fetch(API+'/api/clientes?codigo='+encodeURIComponent(codigo),{method:'DELETE',headers:{'X-Admin-Token':authToken,'Accept':'application/json'}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.message||'Não foi possível apagar o cadastro.');
     erro.className='sucesso';
     erro.textContent='Cadastro '+codigo+' apagado com sucesso.';
     await carregarClientes();
@@ -154,35 +186,17 @@ async function apagarCliente(codigo, botao){
 
 function render(items){
   statusEl.textContent=items.length+' cadastro(s) encontrado(s).';
-
   document.getElementById('clientes').innerHTML=items.map(c=>`<tr>
-    <td>${esc(c.codigo)}</td>
-    <td>${esc(c.nome)}</td>
-    <td>${esc(c.cpf)}</td>
-    <td>${esc(c.email)}</td>
-    <td>${esc(c.whatsapp)}</td>
-    <td>${esc(c.cep)}</td>
-    <td>${esc(c.endereco)}</td>
-    <td>${esc(c.numero)}</td>
-    <td>${esc(c.complemento)}</td>
-    <td>${esc(c.bairro)}</td>
-    <td>${esc(c.cidade)}</td>
-    <td>${esc(c.estado)}</td>
-    <td>${esc(c.servico)}</td>
-    <td>${esc(c.produto)}</td>
-    <td>${esc(c.status)}</td>
+    <td>${esc(c.codigo)}</td><td>${esc(c.nome)}</td><td>${esc(c.cpf)}</td><td>${esc(c.email)}</td><td>${esc(c.whatsapp)}</td>
+    <td>${esc(c.cep)}</td><td>${esc(c.endereco)}</td><td>${esc(c.numero)}</td><td>${esc(c.complemento)}</td><td>${esc(c.bairro)}</td>
+    <td>${esc(c.cidade)}</td><td>${esc(c.estado)}</td><td>${esc(c.servico)}</td><td>${esc(c.produto)}</td><td>${esc(c.status)}</td>
     <td>${esc(c.criado_em)}</td>
-    <td><button class="danger" type="button" onclick="apagarCliente('${js(c.codigo)}',this)">Apagar</button></td>
+    <td><div class="acoes">${c.status==='Aprovado'?'<button class="secondary" type="button" disabled>Aprovado</button>':`<button class="success" type="button" onclick="aprovarCliente('${js(c.codigo)}',this)">Aprovar</button>`}<button class="danger" type="button" onclick="apagarCliente('${js(c.codigo)}',this)">Apagar</button></div></td>
   </tr>`).join('');
 }
 
-function esc(v){
-  return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
-}
-
-function js(v){
-  return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-}
+function esc(v){return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));}
+function js(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 </script>
 </body>
 </html>
