@@ -116,10 +116,51 @@
       conteudo.hidden = true; conteudo.style.cssText = 'padding:0 16px 16px;';
       const grid = document.createElement('div');
       grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;';
+      const urls = {
+        'Zara':'https://www.zara.com/be/',
+        'H&M':'https://www2.hm.com/fr_be/index.html',
+        'C&A':'https://www.c-and-a.com/be/fr/shop',
+        'JBC':'https://www.jbc.be/',
+        'Primark':'https://www.primark.com/en-be',
+        'WE Fashion':'https://www.wefashion.com/be_BE/',
+        'Decathlon':'https://www.decathlon.be/',
+        'Intersport':'https://www.intersport.be/',
+        'Torfs':'https://www.torfs.be/',
+        'AS Adventure':'https://www.asadventure.com/',
+        'ICI PARIS XL':'https://www.iciparisxl.be/',
+        'Douglas':'https://www.douglas.be/',
+        'Di':'https://www.di.be/',
+        'Kruidvat':'https://www.kruidvat.be/',
+        'MediaMarkt':'https://www.mediamarkt.be/',
+        'Fnac':'https://www.fr.fnac.be/',
+        'Vanden Borre':'https://www.vandenborre.be/',
+        'Krëfel':'https://www.krefel.be/',
+        'Coolblue':'https://www.coolblue.be/',
+        'IKEA':'https://www.ikea.com/be/en/',
+        'JYSK':'https://jysk.be/',
+        'Brico':'https://www.brico.be/',
+        'Hubo':'https://www.hubo.be/',
+        'Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/',
+        'Carrefour':'https://www.carrefour.be/',
+        'Delhaize':'https://www.delhaize.be/',
+        'Colruyt':'https://www.colruyt.be/',
+        'Lidl':'https://www.lidl.be/',
+        'ALDI':'https://www.aldi.be/',
+        'Albert Heijn':'https://www.ah.be/',
+        'DreamLand':'https://www.dreamland.be/',
+        'Club':'https://www.club.be/',
+        'Standaard Boekhandel':'https://www.standaardboekhandel.be/',
+        'Tom&Co':'https://www.tomandco.com/',
+        'Poils & Plumes':'https://www.poils-plumes.be/'
+      };
+
       categoria.lojas.forEach(loja => {
-        const card = document.createElement('div');
-        card.style.cssText = 'padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;';
-        card.innerHTML = `<strong style="display:block;color:#06245c;">${loja[0]}</strong><small style="display:block;color:#667085;margin-top:4px;">${loja[1]}</small>`;
+        const card = document.createElement('a');
+        card.href = urls[loja[0]] || '#';
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.style.cssText = 'display:block;padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;color:inherit;text-decoration:none;cursor:pointer;transition:.2s ease;';
+        card.innerHTML = `<strong style="display:block;color:#06245c;">${loja[0]}</strong><small style="display:block;color:#667085;margin-top:4px;">${loja[1]} · Abrir site oficial ↗</small>`;
         grid.appendChild(card);
       });
       conteudo.appendChild(grid); bloco.appendChild(botao); bloco.appendChild(conteudo); container.appendChild(bloco);
