@@ -37,6 +37,24 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
 
+      - name: Adicionar botões Serviços e Lojas
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          antigo = '''      <nav>\n        <a href="#servicos">Serviços</a>\n        <a href="#como-funciona">Como funciona</a>\n        <a href="#cadastro">Cadastro</a>\n      </nav>'''
+          novo = '''      <nav>\n        <a href="#servicos" class="btn btn-primary">Serviços EuroCompra</a>\n        <a href="#lojas" class="btn btn-gold">Lojas</a>\n        <a href="#como-funciona">Como funciona</a>\n        <a href="#cadastro">Cadastro</a>\n      </nav>'''
+          if antigo in s:
+              s = s.replace(antigo, novo, 1)
+          elif 'Serviços EuroCompra' in s and 'href="#lojas"' in s:
+              print('Botões já estão presentes.')
+          else:
+              raise SystemExit('Não encontrei o menu esperado no index.html')
+          p.write_text(s, encoding='utf-8')
+          PY
+
       - name: Salvar alteração
         shell: bash
         run: |
@@ -47,5 +65,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Ativar preenchimento automático do CEP'
+          git commit -m 'Adicionar botões Serviços EuroCompra e Lojas'
           git push
