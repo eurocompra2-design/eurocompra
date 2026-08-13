@@ -465,6 +465,26 @@
       color: var(--azul);
     }
 
+
+    .mobile-precos {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 13px;
+      border-radius: 11px;
+      background: var(--dourado);
+      color: var(--texto);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 850px) {
+      .mobile-precos {
+        display: inline-flex;
+      }
+    }
+
     /* MOBILE */
 
     @media (max-width: 850px) {
@@ -537,6 +557,8 @@
       <a href="#cadastro" class="btn btn-primary">
         Começar agora
       </a>
+
+      <a data-eurocompra-precos class="mobile-precos" href="precos.html">💰 Preços</a>
 
     </div>
   </header>
