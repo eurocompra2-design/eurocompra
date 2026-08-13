@@ -1,0 +1,62 @@
+name: Formatar CPF e CEP no cadastro
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - '.github/workflows/formatar-cadastro.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  formatar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Aplicar máscara de CPF e CEP
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '// EuroCompra — máscara de CPF e CEP no cadastro.'
+          if marker not in s:
+              script = r'''<script>
+          // EuroCompra — máscara de CPF e CEP no cadastro.
+          (function () {
+            function mascararCPF(valor) {
+              let v = valor.replace(/\D/g, '').slice(0, 11);
+              if (v.length > 9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+              if (v.length > 6) return v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+              if (v.length > 3) return v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+              return v;
+            }
+            function mascararCEP(valor) {
+              let v = valor.replace(/\D/g, '').slice(0, 8);
+              if (v.length > 5) return v.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+              return v;
+            }
+            document.addEventListener('input', function (event) {
+              const campo = event.target;
+              if (!campo) return;
+              if (campo.id === 'cpf') campo.value = mascararCPF(campo.value);
+              if (campo.id === 'cep') campo.value = mascararCEP(campo.value);
+            });
+          })();
+          </script>'''
+              s = s.replace('</body>', script + '\n</body>')
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Publicar alteração
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Aplicar máscara de CPF e CEP no cadastro'
+          git push
