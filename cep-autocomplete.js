@@ -68,3 +68,63 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ajustarPersonalShopper); else ajustarPersonalShopper();
 })();
+
+// EuroCompra — categorias de lojas expansíveis, sem alterar o cadastro ou demais seções.
+(function () {
+  function configurarCategoriasLojas() {
+    const container = document.querySelector('.lojas-categorias');
+    if (!container || container.dataset.configurado === '1') return;
+    container.dataset.configurado = '1';
+    const categorias = [
+      { nome: '👗 Moda e vestuário', descricao: 'Roupas, calçados e marcas europeias.', lojas: [
+        ['Zara', 'Moda e acessórios'], ['H&M', 'Moda e básicos'], ['C&A', 'Roupas e acessórios'], ['JBC', 'Moda na Bélgica'], ['Primark', 'Moda e básicos'], ['WE Fashion', 'Moda e roupas']
+      ]},
+      { nome: '👟 Calçados e esportes', descricao: 'Tênis, calçados, roupas e equipamentos esportivos.', lojas: [
+        ['Decathlon', 'Esportes e equipamentos'], ['Intersport', 'Artigos esportivos'], ['Torfs', 'Calçados e acessórios'], ['AS Adventure', 'Outdoor e esportes']
+      ]},
+      { nome: '💄 Beleza e perfumes', descricao: 'Perfumes, cosméticos e cuidados pessoais.', lojas: [
+        ['ICI PARIS XL', 'Perfumes e cosméticos'], ['Douglas', 'Beleza e perfumes'], ['Di', 'Cosméticos e cuidados pessoais'], ['Kruidvat', 'Saúde, beleza e cuidados pessoais']
+      ]},
+      { nome: '📱 Eletrônicos e tecnologia', descricao: 'Celulares, computadores, eletrônicos e acessórios.', lojas: [
+        ['MediaMarkt', 'Eletrônicos e tecnologia'], ['Fnac', 'Tecnologia, livros e entretenimento'], ['Vanden Borre', 'Eletrônicos e eletrodomésticos'], ['Krëfel', 'Eletrônicos e eletrodomésticos'], ['Coolblue', 'Eletrônicos e tecnologia']
+      ]},
+      { nome: '🏠 Casa e decoração', descricao: 'Móveis, decoração, bricolagem e produtos para o lar.', lojas: [
+        ['IKEA', 'Móveis e decoração'], ['JYSK', 'Casa e móveis'], ['Brico', 'Bricolagem e casa'], ['Hubo', 'Casa e bricolagem'], ['Maisons du Monde', 'Móveis e decoração']
+      ]},
+      { nome: '🛒 Supermercados e alimentação', descricao: 'Supermercados e compras do dia a dia.', lojas: [
+        ['Carrefour', 'Supermercado e alimentação'], ['Delhaize', 'Supermercado e alimentação'], ['Colruyt', 'Supermercado e alimentação'], ['Lidl', 'Supermercado e alimentação'], ['ALDI', 'Supermercado e alimentação'], ['Albert Heijn', 'Supermercado e alimentação']
+      ]},
+      { nome: '🧸 Crianças e brinquedos', descricao: 'Roupas infantis, brinquedos e produtos para crianças.', lojas: [
+        ['DreamLand', 'Brinquedos e crianças'], ['JBC', 'Moda infantil e familiar'], ['C&A', 'Moda infantil e familiar']
+      ]},
+      { nome: '📚 Livros e papelaria', descricao: 'Livros, material escolar e entretenimento.', lojas: [
+        ['Fnac', 'Livros, tecnologia e entretenimento'], ['Club', 'Livros e papelaria'], ['Standaard Boekhandel', 'Livros e papelaria']
+      ]},
+      { nome: '🐶 Animais', descricao: 'Produtos e acessórios para animais de estimação.', lojas: [
+        ['Tom&Co', 'Produtos para animais'], ['Poils & Plumes', 'Produtos para animais']
+      ]}
+    ];
+    container.innerHTML = '';
+    categorias.forEach((categoria, indice) => {
+      const bloco = document.createElement('div');
+      bloco.style.cssText = 'margin-bottom:14px;border:1px solid #e2e7f0;border-radius:16px;background:#fff;overflow:hidden;';
+      const botao = document.createElement('button');
+      botao.type = 'button'; botao.setAttribute('aria-expanded','false');
+      botao.style.cssText = 'width:100%;padding:18px 20px;border:0;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#06245c;display:flex;justify-content:space-between;align-items:center;';
+      botao.innerHTML = `<span><strong style="font-size:18px;">${categoria.nome}</strong><small style="display:block;color:#667085;margin-top:4px;">${categoria.descricao}</small></span><span class="euro-seta" style="font-size:20px;color:#063b9e;">＋</span>`;
+      const conteudo = document.createElement('div');
+      conteudo.hidden = true; conteudo.style.cssText = 'padding:0 16px 16px;';
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;';
+      categoria.lojas.forEach(loja => {
+        const card = document.createElement('div');
+        card.style.cssText = 'padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;';
+        card.innerHTML = `<strong style="display:block;color:#06245c;">${loja[0]}</strong><small style="display:block;color:#667085;margin-top:4px;">${loja[1]}</small>`;
+        grid.appendChild(card);
+      });
+      conteudo.appendChild(grid); bloco.appendChild(botao); bloco.appendChild(conteudo); container.appendChild(bloco);
+      botao.addEventListener('click', () => { const aberto = botao.getAttribute('aria-expanded') === 'true'; botao.setAttribute('aria-expanded', String(!aberto)); conteudo.hidden = aberto; botao.querySelector('.euro-seta').textContent = aberto ? '＋' : '−'; });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', configurarCategoriasLojas); else configurarCategoriasLojas();
+})();
