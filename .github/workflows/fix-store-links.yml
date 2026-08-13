@@ -1,0 +1,112 @@
+name: Fix official store links
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'Fix official store links: apply patch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch store links
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          text = text.replace(
+              'const buscaLojas = document.getElementById("buscaLojas");',
+              'const buscaLojas = document.getElementById("busca-lojas");'
+          )
+
+          new_script = r'''<script>
+/* CORREÇÃO DAS LOJAS JS */
+(function(){
+  const lojas={
+    'Moda':[
+      {nome:'Zara',desc:'Moda e acessórios',url:'https://www.zara.com/be/'},
+      {nome:'H&M',desc:'Moda e básicos',url:'https://www2.hm.com/fr_be/index.html'},
+      {nome:'C&A',desc:'Roupas e acessórios',url:'https://www.c-and-a.com/be/fr/shop'},
+      {nome:'JBC',desc:'Moda na Bélgica',url:'https://www.jbc.be/'},
+      {nome:'Mango',desc:'Moda europeia',url:'https://shop.mango.com/be/fr'},
+      {nome:'UNIQLO',desc:'Moda e básicos',url:'https://www.uniqlo.com/be/en/'}
+    ],
+    'Eletrônicos':[
+      {nome:'MediaMarkt',desc:'Eletrônicos e tecnologia',url:'https://www.mediamarkt.be/'},
+      {nome:'Coolblue',desc:'Tecnologia e eletrônicos',url:'https://www.coolblue.be/'},
+      {nome:'Apple',desc:'Produtos Apple',url:'https://www.apple.com/be/'}
+    ],
+    'Casa':[
+      {nome:'IKEA',desc:'Casa e decoração',url:'https://www.ikea.com/be/en/'},
+      {nome:'Action',desc:'Casa e utilidades',url:'https://www.action.com/en-be/'},
+      {nome:'JYSK',desc:'Casa e móveis',url:'https://jysk.be/'},
+      {nome:'CASA',desc:'Casa e decoração',url:'https://www.casashops.com/en-be/'},
+      {nome:'Maisons du Monde',desc:'Casa e decoração',url:'https://www.maisonsdumonde.com/BE/en/'}
+    ]
+  };
+
+  const container=document.querySelector('.lojas-categorias');
+  if(!container) return;
+
+  container.querySelectorAll(':scope > .loja-card').forEach(function(card){
+    card.addEventListener('click',function(){
+      const titulo=card.querySelector('h3');
+      if(!titulo) return;
+      const categoria=titulo.textContent.replace(/^\s*[^A-Za-zÀ-ÿ]+\s*/,'').trim();
+      const lista=lojas[categoria];
+      if(!lista) return;
+
+      const antiga=container.querySelector('.lojas-lista-aberta');
+      if(antiga) antiga.remove();
+
+      const box=document.createElement('div');
+      box.className='lojas-lista-aberta ativa';
+      const grid=document.createElement('div');
+      grid.className='lojas-grid';
+
+      lista.forEach(function(loja){
+        const link=document.createElement('a');
+        link.className='loja-card';
+        link.href=loja.url;
+        link.target='_blank';
+        link.rel='noopener noreferrer';
+        link.innerHTML='<span class="loja-icon">🏬</span><span><strong>'+loja.nome+'</strong><small>'+loja.desc+'</small></span><b>↗</b>';
+        grid.appendChild(link);
+      });
+
+      box.appendChild(grid);
+      container.appendChild(box);
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
+})();
+</script>'''
+
+          pattern = r'<script>\s*/\* CORREÇÃO DAS LOJAS JS \*/.*?</script>'
+          patched, count = re.subn(pattern, new_script, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Bloco CORREÇÃO DAS LOJAS JS não encontrado; nenhuma alteração foi feita.')
+
+          path.write_text(patched, encoding='utf-8')
+          print('Patch aplicado com sucesso.')
+
+      - name: Commit and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/fix-store-links.yml
+          git diff --cached --quiet && exit 0 || true
+          git commit -m "Fix official store links: apply patch"
+          git push
