@@ -24,7 +24,6 @@ jobs:
             echo 'Script do CEP já está ligado.'
             exit 0
           fi
-
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
@@ -37,48 +36,15 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
 
-      - name: Adicionar botões Serviços e Lojas
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          antigo = '''      <nav>\n        <a href="#servicos">Serviços</a>\n        <a href="#como-funciona">Como funciona</a>\n        <a href="#cadastro">Cadastro</a>\n      </nav>'''
-          novo = '''      <nav>\n        <a href="#servicos" class="btn btn-primary">Serviços EuroCompra</a>\n        <a href="#lojas" class="btn btn-gold">Lojas</a>\n        <a href="#como-funciona">Como funciona</a>\n        <a href="#cadastro">Cadastro</a>\n      </nav>'''
-          if antigo in s:
-              s = s.replace(antigo, novo, 1)
-          elif 'Serviços EuroCompra' in s and 'href="#lojas"' in s:
-              print('Botões já estão presentes.')
-          else:
-              raise SystemExit('Não encontrei o menu esperado no index.html')
-          p.write_text(s, encoding='utf-8')
-          PY
-
-      - name: Corrigir links oficiais das lojas
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('cep-autocomplete.js')
-          s = p.read_text(encoding='utf-8')
-          antigo = """      categoria.lojas.forEach(loja => {\n        const card = document.createElement('div');\n        card.style.cssText = 'padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;';\n        card.innerHTML = `<strong style=\"display:block;color:#06245c;\">${loja[0]}</strong><small style=\"display:block;color:#667085;margin-top:4px;\">${loja[1]}</small>`;\n        grid.appendChild(card);\n      });"""
-          novo = """      const urls = {\n        'Zara':'https://www.zara.com/be/',\n        'H&M':'https://www2.hm.com/fr_be/index.html',\n        'C&A':'https://www.c-and-a.com/be/fr/shop',\n        'JBC':'https://www.jbc.be/',\n        'Primark':'https://www.primark.com/en-be',\n        'WE Fashion':'https://www.wefashion.com/be_BE/',\n        'Decathlon':'https://www.decathlon.be/',\n        'Intersport':'https://www.intersport.be/',\n        'Torfs':'https://www.torfs.be/',\n        'AS Adventure':'https://www.asadventure.com/',\n        'ICI PARIS XL':'https://www.iciparisxl.be/',\n        'Douglas':'https://www.douglas.be/',\n        'Di':'https://www.di.be/',\n        'Kruidvat':'https://www.kruidvat.be/',\n        'MediaMarkt':'https://www.mediamarkt.be/',\n        'Fnac':'https://www.fr.fnac.be/',\n        'Vanden Borre':'https://www.vandenborre.be/',\n        'Krëfel':'https://www.krefel.be/',\n        'Coolblue':'https://www.coolblue.be/',\n        'IKEA':'https://www.ikea.com/be/en/',\n        'JYSK':'https://jysk.be/',\n        'Brico':'https://www.brico.be/',\n        'Hubo':'https://www.hubo.be/',\n        'Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/',\n        'Carrefour':'https://www.carrefour.be/',\n        'Delhaize':'https://www.delhaize.be/',\n        'Colruyt':'https://www.colruyt.be/',\n        'Lidl':'https://www.lidl.be/',\n        'ALDI':'https://www.aldi.be/',\n        'Albert Heijn':'https://www.ah.be/',\n        'DreamLand':'https://www.dreamland.be/',\n        'Club':'https://www.club.be/',\n        'Standaard Boekhandel':'https://www.standaardboekhandel.be/',\n        'Tom&Co':'https://www.tomandco.com/',\n        'Poils & Plumes':'https://www.poils-plumes.be/'\n      };\n\n      categoria.lojas.forEach(loja => {\n        const card = document.createElement('a');\n        card.href = urls[loja[0]] || '#';\n        card.target = '_blank';\n        card.rel = 'noopener noreferrer';\n        card.style.cssText = 'display:block;padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;color:inherit;text-decoration:none;cursor:pointer;transition:.2s ease;';\n        card.innerHTML = `<strong style=\"display:block;color:#06245c;\">${loja[0]}</strong><small style=\"display:block;color:#667085;margin-top:4px;\">${loja[1]} · Abrir site oficial ↗</small>`;\n        grid.appendChild(card);\n      });"""
-          if antigo not in s:
-              raise SystemExit('Trecho das lojas não encontrado; nenhuma alteração foi feita.')
-          p.write_text(s.replace(antigo, novo, 1), encoding='utf-8')
-          PY
-
       - name: Salvar alteração
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html cep-autocomplete.js
-          git rm -f store-links-trigger.txt .github/workflows/fix-store-links.yml 2>/dev/null || true
+          git add index.html
           if git diff --cached --quiet; then
             echo 'Nenhuma alteração necessária.'
             exit 0
           fi
-          git commit -m 'Fix official store links'
+          git commit -m 'Ativar busca automática de CEP'
           git push
