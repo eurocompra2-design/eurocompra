@@ -1,0 +1,48 @@
+name: Add paste image button
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-paste-image-button.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add paste image button
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old_html = '<div class="upload"><input id="imagem" name="imagem" type="file" accept="image/*"><small class="help">Você pode escolher uma foto da galeria ou tirar uma foto pelo celular.</small><img id="previewImagem" class="preview" alt="Pré-visualização da imagem"></div>'
+          new_html = '<div class="upload"><input id="imagem" name="imagem" type="file" accept="image/*"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" id="colarImagem" class="btn secondary">📋 Colar imagem</button></div><small class="help">Você pode escolher uma foto da galeria, tirar uma foto pelo celular ou copiar uma imagem e tocar em “Colar imagem”.</small><img id="previewImagem" class="preview" alt="Pré-visualização da imagem"></div>'
+
+          if old_html in s and 'id="colarImagem"' not in s:
+              s = s.replace(old_html, new_html, 1)
+
+          old_js = "imagem.addEventListener('change',()=>{const file=imagem.files[0];if(!file){preview.style.display='none';return}if(file.size>5*1024*1024){alert('A imagem deve ter no máximo 5 MB.');imagem.value='';preview.style.display='none';return}preview.src=URL.createObjectURL(file);preview.style.display='block'});"
+          new_js = old_js + "\nasync function usarImagemColada(file){if(!file||!file.type.startsWith('image/')){alert('Nenhuma imagem encontrada para colar.');return}if(file.size>5*1024*1024){alert('A imagem deve ter no máximo 5 MB.');return}const dt=new DataTransfer();dt.items.add(new File([file],'imagem-colada.png',{type:file.type}));imagem.files=dt.files;imagem.dispatchEvent(new Event('change',{bubbles:true}));}\nconst colarImagem=document.getElementById('colarImagem');colarImagem.addEventListener('click',async()=>{try{if(!navigator.clipboard||!navigator.clipboard.read){alert('No iPhone, copie a imagem e use a opção Colar do sistema no campo de imagem.');return}const itens=await navigator.clipboard.read();for(const item of itens){const tipo=item.types.find(t=>t.startsWith('image/'));if(tipo){await usarImagemColada(await item.getType(tipo));return}}alert('A área de transferência não contém uma imagem.');}catch(e){alert('Não foi possível acessar a imagem copiada. Copie a imagem novamente e toque em Colar imagem.');}});document.addEventListener('paste',e=>{const itens=[...(e.clipboardData?.items||[])];const item=itens.find(i=>i.type.startsWith('image/'));if(item){e.preventDefault();usarImagemColada(item.getAsFile());}});"
+          if old_js in s and 'function usarImagemColada' not in s:
+              s = s.replace(old_js, new_js, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+          else
+            git commit -m 'Adicionar botão Colar imagem no cadastro'
+            git push
+          fi
