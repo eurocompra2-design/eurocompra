@@ -56,6 +56,16 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+
+async function criarTabelaAcesso(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS cliente_acesso (codigo TEXT PRIMARY KEY, salt TEXT NOT NULL, senha_hash TEXT NOT NULL, criado_em TEXT NOT NULL DEFAULT (datetime('now')), atualizado_em TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+}
+function b64(bytes) { let out=""; const a=new Uint8Array(bytes); for(let i=0;i<a.length;i+=0x8000) out+=String.fromCharCode(...a.subarray(i,i+0x8000)); return btoa(out); }
+function unb64(text) { const bin=atob(text); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
+async function hashSenha(senha,salt) { const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveBits']); const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:unb64(salt),iterations:120000,hash:'SHA-256'},material,256); return b64(bits); }
+function senhaValida(senha) { return typeof senha==='string' && senha.length>=8 && /[A-Za-z]/.test(senha) && /\d/.test(senha); }
+function codigoValido(codigo) { return /^EC-\d{8}-[A-Z0-9]{6}$/.test(clean(codigo)); }
+
 function enderecoEuroCompra() {
   return {
     nome: "EUROCOMPRA",
@@ -158,6 +168,13 @@ export default {
             const resultadoEmail = await respostaEmail.json();
             console.log("Resend:", respostaEmail.status, resultadoEmail);
             emailEnviado = respostaEmail.ok;
+
+            if (respostaEmail.ok && email && email !== env.ADMIN_EMAIL) {
+              try {
+                await fetch("https://api.resend.com/emails", { method:"POST", headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({ from:env.RESEND_FROM,to:[email],subject:`🔐 Seu acesso EuroCompra - ${codigo}`,html:`<h2>Seu cadastro EuroCompra foi recebido</h2><p>Seu código de cadastro é:</p><p style="font-size:22px;font-weight:700">${escapeHtml(codigo)}</p><p>Guarde este código. Na próxima visita, use-o para criar sua senha e acessar seu cadastro.</p>` }) });
+              } catch(erro) { console.error("Erro ao enviar código ao cliente:",erro); }
+            }
+
           } catch (erro) {
             console.error("Erro no e-mail:", erro);
           }
@@ -204,6 +221,37 @@ export default {
         console.error("Erro no cadastro:", erro);
         return json({ ok: false, message: "Não foi possível processar o cadastro." }, 400);
       }
+    }
+
+
+    if (request.method === "POST" && url.pathname === "/api/acesso/criar-senha") {
+      try {
+        const body=await request.json(); const codigo=clean(body.codigo).toUpperCase(); const senha=String(body.senha||"");
+        if(!codigoValido(codigo)) return json({ok:false,message:"Código de cadastro inválido."},400);
+        if(!senhaValida(senha)) return json({ok:false,message:"A senha deve ter pelo menos 8 caracteres, uma letra e um número."},400);
+        await criarTabelaAcesso(env);
+        const cliente=await env.DB.prepare("SELECT codigo,nome FROM clientes WHERE codigo = ?").bind(codigo).first();
+        if(!cliente) return json({ok:false,message:"Código de cadastro não encontrado."},404);
+        const existente=await env.DB.prepare("SELECT codigo FROM cliente_acesso WHERE codigo = ?").bind(codigo).first();
+        if(existente) return json({ok:false,message:"Este cadastro já possui uma senha. Use Entrar."},409);
+        const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const senha_hash=await hashSenha(senha,salt);
+        await env.DB.prepare("INSERT INTO cliente_acesso (codigo,salt,senha_hash) VALUES (?,?,?)").bind(codigo,salt,senha_hash).run();
+        return json({ok:true,codigo,nome:cliente.nome,message:"Senha criada com sucesso."});
+      } catch(erro) { console.error("Erro ao criar senha:",erro); return json({ok:false,message:"Não foi possível criar a senha."},500); }
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/acesso/login") {
+      try {
+        const body=await request.json(); const codigo=clean(body.codigo).toUpperCase(); const senha=String(body.senha||"");
+        if(!codigoValido(codigo)||!senha) return json({ok:false,message:"Informe o código e a senha."},400);
+        await criarTabelaAcesso(env);
+        const acesso=await env.DB.prepare("SELECT codigo,salt,senha_hash FROM cliente_acesso WHERE codigo = ?").bind(codigo).first();
+        if(!acesso) return json({ok:false,message:"Código ou senha incorretos."},401);
+        if(await hashSenha(senha,acesso.salt)!==acesso.senha_hash) return json({ok:false,message:"Código ou senha incorretos."},401);
+        const cliente=await env.DB.prepare("SELECT codigo,nome,email,whatsapp,servico,produto,status,criado_em,atualizado_em FROM clientes WHERE codigo = ?").bind(codigo).first();
+        if(!cliente) return json({ok:false,message:"Cadastro não encontrado."},404);
+        return json({ok:true,cliente,message:"Acesso autorizado."});
+      } catch(erro) { console.error("Erro no acesso:",erro); return json({ok:false,message:"Não foi possível entrar."},500); }
     }
 
     if (request.method === "GET" && url.pathname === "/api/clientes") {
