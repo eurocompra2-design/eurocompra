@@ -1,0 +1,40 @@
+name: Restaurar valores dos serviços
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  restaurar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adicionar somente a área de valores
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'id="valores-servicos"' not in s:
+              css='''<style id="eurocompra-valores-style">.valores-cta{margin-top:28px;text-align:center}.valores-btn{display:inline-flex;align-items:center;gap:10px;background:#063b9e;color:#fff;border:0;border-radius:13px;padding:14px 22px;font-weight:800;cursor:pointer;box-shadow:0 10px 25px rgba(6,59,158,.16)}.valores-btn:hover{opacity:.92}.valores-panel{display:none;margin:24px auto 0;max-width:900px;background:#fff;border:1px solid #e2e7f0;border-radius:20px;padding:25px;box-shadow:0 15px 40px rgba(6,59,158,.08);text-align:left}.valores-panel.ativo{display:block}.valores-panel h3{color:#06245c;margin-top:0}.valores-lista{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.valor-item{display:flex;justify-content:space-between;gap:15px;padding:13px 14px;background:#f7f9fc;border-radius:11px}.valor-item strong{color:#063b9e;white-space:nowrap}.valor-note{font-size:13px;color:#667085}.cotacao-btn{display:inline-flex;margin-top:15px;background:#f4b942;color:#172033;border-radius:11px;padding:12px 17px;font-weight:800}@media(max-width:700px){.valores-lista{grid-template-columns:1fr}}</style>'''
+              s=s.replace('</head>',css+'</head>',1)
+              alvo='''<div class="cards"><div class="card"><h3>🛒 Compras na Bélgica</h3><p>Solicite produtos de lojas belgas e europeias.</p></div><div class="card"><h3>📦 Redirecionamento</h3><p>Receba suas compras através do nosso serviço.</p></div><div class="card"><h3>👤 Personal Shopper</h3><p>Atendimento personalizado para encontrar seus produtos.</p></div></div>'''
+              novo=alvo+'''<div class="valores-cta"><button id="valores-servicos" class="valores-btn" type="button">💶 Ver valores dos serviços <span>→</span></button><div id="valoresPanel" class="valores-panel"><h3>Valores dos Serviços EuroCompra</h3><p class="valor-note">Valores claros e transparentes. O preço do produto é separado da taxa EuroCompra, serviços adicionais e frete.</p><div class="valores-lista"><div class="valor-item"><span>Compra online</span><strong>8% (mín. €5)</strong></div><div class="valor-item"><span>Compra presencial</span><strong>€50/h</strong></div><div class="valor-item"><span>Conferência</span><strong>€5</strong></div><div class="valor-item"><span>Fotos</span><strong>€5</strong></div><div class="valor-item"><span>Reembalagem</span><strong>€10</strong></div><div class="valor-item"><span>Consolidação</span><strong>€5/pacote adicional</strong></div><div class="valor-item"><span>Armazenamento</span><strong>30 dias grátis</strong></div><div class="valor-item"><span>Envio internacional</span><strong>Calculado conforme destino e peso</strong></div></div><p class="valor-note">Os valores podem variar conforme a solicitação específica. O frete é calculado de acordo com destino e peso.</p><a class="cotacao-btn" href="#cadastro">Solicitar cotação gratuita</a></div></div>'''
+              if alvo not in s: raise SystemExit('Bloco de serviços não encontrado; nenhuma alteração feita.')
+              s=s.replace(alvo,novo,1)
+              js='''<script id="eurocompra-valores-script">document.getElementById('valores-servicos')?.addEventListener('click',function(){document.getElementById('valoresPanel')?.classList.toggle('ativo')});</script>'''
+              s=s.replace('</body>',js+'</body>',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Publicar e remover workflow temporário
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/recolocar-valores-servicos.yml
+          git commit -m "feat: restaurar valores dos serviços sem alterar restante do site [skip ci]"
+          git push origin HEAD:main
