@@ -69,7 +69,7 @@ function enderecoEuroCompra() {
 
 function mensagemAprovacao(codigo) {
   const a = enderecoEuroCompra();
-  return `✅ CADASTRO APROVADO — EUROCOMPRA\n\nSeu código de cliente: ${codigo}\n\n📦 ENDEREÇO PARA RECEBIMENTO\n${a.texto}\n\n🔖 REFERÊNCIA OBRIGATÓRIA\n${codigo}\n\n⚠️ Sempre informe o código ${codigo} ao fazer uma compra para que possamos identificar sua encomenda quando ela chegar.\n\n🔐 Este endereço é privado e destinado exclusivamente ao seu cadastro EuroCompra.`;
+  return `✅ CADASTRO APROVADO — EUROCOMPRA\n\nSeu código de cliente: ${codigo}\n\n📦 ENDEREÇO PARA RECEBIMENTO\n${a.texto}\n\n🔖 REFERÊNCIA OBRIGATÓRIA\n${codigo}\n\n⚠️ Sempre informe o código ${codigo} ao fazer uma compra para que possamos identificar sua encomenda quando ela chegar.\n\n🔐 Este endereço é privado e destinado exclusivamente ao seu cadastro EuroCompra.\n\n🕘 HORÁRIO DE FUNCIONAMENTO\n09:00 às 18:00 — horário da Bélgica 🇧🇪`;
 }
 
 export default {
@@ -301,4 +301,4 @@ export default {
   },
 };
 
-// deploy: approval flow with private receiving address
+// deploy: approval flow with private receiving address and business hours
