@@ -1,0 +1,84 @@
+from pathlib import Path
+
+# Patch server
+p = Path('worker.js')
+s = p.read_text(encoding='utf-8')
+
+marker = 'function enderecoEuroCompra() {'
+auth_code = r'''
+async function criarTabelaAcesso(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS cliente_acesso (codigo TEXT PRIMARY KEY, salt TEXT NOT NULL, senha_hash TEXT NOT NULL, criado_em TEXT NOT NULL DEFAULT (datetime('now')), atualizado_em TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+}
+function b64(bytes) { let out=""; const a=new Uint8Array(bytes); for(let i=0;i<a.length;i+=0x8000) out+=String.fromCharCode(...a.subarray(i,i+0x8000)); return btoa(out); }
+function unb64(text) { const bin=atob(text); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
+async function hashSenha(senha,salt) { const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveBits']); const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:unb64(salt),iterations:120000,hash:'SHA-256'},material,256); return b64(bits); }
+function senhaValida(senha) { return typeof senha==='string' && senha.length>=8 && /[A-Za-z]/.test(senha) && /\d/.test(senha); }
+function codigoValido(codigo) { return /^EC-\d{8}-[A-Z0-9]{6}$/.test(clean(codigo)); }
+'''
+if 'async function criarTabelaAcesso' not in s:
+    s=s.replace(marker,auth_code+'\n'+marker,1)
+
+marker2='    if (request.method === "GET" && url.pathname === "/api/clientes") {'
+routes=r'''
+    if (request.method === "POST" && url.pathname === "/api/acesso/criar-senha") {
+      try {
+        const body=await request.json(); const codigo=clean(body.codigo).toUpperCase(); const senha=String(body.senha||"");
+        if(!codigoValido(codigo)) return json({ok:false,message:"Código de cadastro inválido."},400);
+        if(!senhaValida(senha)) return json({ok:false,message:"A senha deve ter pelo menos 8 caracteres, uma letra e um número."},400);
+        await criarTabelaAcesso(env);
+        const cliente=await env.DB.prepare("SELECT codigo,nome FROM clientes WHERE codigo = ?").bind(codigo).first();
+        if(!cliente) return json({ok:false,message:"Código de cadastro não encontrado."},404);
+        const existente=await env.DB.prepare("SELECT codigo FROM cliente_acesso WHERE codigo = ?").bind(codigo).first();
+        if(existente) return json({ok:false,message:"Este cadastro já possui uma senha. Use Entrar."},409);
+        const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const senha_hash=await hashSenha(senha,salt);
+        await env.DB.prepare("INSERT INTO cliente_acesso (codigo,salt,senha_hash) VALUES (?,?,?)").bind(codigo,salt,senha_hash).run();
+        return json({ok:true,codigo,nome:cliente.nome,message:"Senha criada com sucesso."});
+      } catch(erro) { console.error("Erro ao criar senha:",erro); return json({ok:false,message:"Não foi possível criar a senha."},500); }
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/acesso/login") {
+      try {
+        const body=await request.json(); const codigo=clean(body.codigo).toUpperCase(); const senha=String(body.senha||"");
+        if(!codigoValido(codigo)||!senha) return json({ok:false,message:"Informe o código e a senha."},400);
+        await criarTabelaAcesso(env);
+        const acesso=await env.DB.prepare("SELECT codigo,salt,senha_hash FROM cliente_acesso WHERE codigo = ?").bind(codigo).first();
+        if(!acesso) return json({ok:false,message:"Código ou senha incorretos."},401);
+        if(await hashSenha(senha,acesso.salt)!==acesso.senha_hash) return json({ok:false,message:"Código ou senha incorretos."},401);
+        const cliente=await env.DB.prepare("SELECT codigo,nome,email,whatsapp,servico,produto,status,criado_em,atualizado_em FROM clientes WHERE codigo = ?").bind(codigo).first();
+        if(!cliente) return json({ok:false,message:"Cadastro não encontrado."},404);
+        return json({ok:true,cliente,message:"Acesso autorizado."});
+      } catch(erro) { console.error("Erro no acesso:",erro); return json({ok:false,message:"Não foi possível entrar."},500); }
+    }
+
+'''
+if '/api/acesso/criar-senha' not in s:
+    s=s.replace(marker2,routes+marker2,1)
+
+# Client receives the code by email when Resend is configured.
+email_marker='            emailEnviado = respostaEmail.ok;'
+email_extra=r'''
+            if (respostaEmail.ok && email && email !== env.ADMIN_EMAIL) {
+              try {
+                await fetch("https://api.resend.com/emails", { method:"POST", headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({ from:env.RESEND_FROM,to:[email],subject:`🔐 Seu acesso EuroCompra - ${codigo}`,html:`<h2>Seu cadastro EuroCompra foi recebido</h2><p>Seu código de cadastro é:</p><p style="font-size:22px;font-weight:700">${escapeHtml(codigo)}</p><p>Guarde este código. Na próxima visita, use-o para criar sua senha e acessar seu cadastro.</p>` }) });
+              } catch(erro) { console.error("Erro ao enviar código ao cliente:",erro); }
+            }
+'''
+if 'Seu acesso EuroCompra' not in s and email_marker in s:
+    s=s.replace(email_marker,email_marker+'\n'+email_extra,1)
+p.write_text(s,encoding='utf-8')
+
+# Patch public page
+p=Path('index.html'); s=p.read_text(encoding='utf-8')
+if 'id="acessoCliente"' not in s:
+    section=r'''
+<section id="acessoCliente" class="form-section" style="display:none"><div class="container"><div class="form-box"><div class="form-header"><h2>🔐 Acesso do cliente</h2><p>Use seu código de cadastro para criar sua senha ou entrar no seu cadastro.</p></div><div id="accessMessage" class="form-message"></div><div id="accessLogin"><div class="form-grid"><div class="full"><label for="accessCodigo">Código de cadastro *</label><input id="accessCodigo" autocomplete="username" placeholder="EC-20260814-ABC123"></div><div class="full"><label for="accessSenha">Senha *</label><input id="accessSenha" type="password" autocomplete="current-password" placeholder="Sua senha"></div></div><button id="accessEntrar" class="btn primary" type="button" style="margin-top:18px">Entrar</button><button id="accessCriar" class="btn gold" type="button" style="margin-top:18px;margin-left:8px">Primeiro acesso / criar senha</button></div><div id="accessCreate" style="display:none"><div class="form-grid"><div class="full"><label for="newSenha">Crie sua senha *</label><input id="newSenha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres, letra e número"></div><div class="full"><label for="newSenha2">Confirme a senha *</label><input id="newSenha2" type="password" autocomplete="new-password" placeholder="Repita a senha"></div></div><button id="accessSalvar" class="btn primary" type="button" style="margin-top:18px">Criar senha</button><button id="accessVoltar" class="btn gold" type="button" style="margin-top:18px;margin-left:8px">Voltar</button></div><div id="accessArea" style="display:none"></div></div></div></section>
+'''
+    s=s.replace('</main>',section+'</main>',1)
+    script=r'''
+<script id="eurocompra-acesso-script">(()=>{const API='https://eurocompra-api.eurocompra2.workers.dev',sec=document.getElementById('acessoCliente'),formSec=document.getElementById('cadastro'),msg=document.getElementById('accessMessage'),login=document.getElementById('accessLogin'),create=document.getElementById('accessCreate'),area=document.getElementById('accessArea');const showMsg=(t,ok=false)=>{msg.textContent=t;msg.style.display='block';msg.style.background=ok?'#eaf8f0':'#fff4e5';msg.style.color=ok?'#16804b':'#9a5b00'};const showAccess=()=>{if(formSec)formSec.style.display='none';if(sec)sec.style.display='block';sec.scrollIntoView({behavior:'smooth',block:'start'})};document.querySelectorAll('a[href="#cadastro"]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showAccess()}));if(location.hash==='#cadastro')setTimeout(showAccess,0);document.getElementById('accessCriar')?.addEventListener('click',()=>{login.style.display='none';create.style.display='block';showMsg('Informe seu código recebido após o cadastro e crie sua senha.')});document.getElementById('accessVoltar')?.addEventListener('click',()=>{create.style.display='none';login.style.display='block';msg.style.display='none'});document.getElementById('accessSalvar')?.addEventListener('click',async()=>{const codigo=document.getElementById('accessCodigo').value.trim().toUpperCase(),senha=document.getElementById('newSenha').value,senha2=document.getElementById('newSenha2').value;if(senha!==senha2)return showMsg('As senhas não conferem.');const r=await fetch(API+'/api/acesso/criar-senha',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo,senha})}),d=await r.json();if(!d.ok)return showMsg(d.message||'Não foi possível criar a senha.');showMsg('Senha criada. Agora você já pode entrar no seu cadastro.',true);create.style.display='none';login.style.display='block'});document.getElementById('accessEntrar')?.addEventListener('click',async()=>{const codigo=document.getElementById('accessCodigo').value.trim().toUpperCase(),senha=document.getElementById('accessSenha').value;const r=await fetch(API+'/api/acesso/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo,senha})}),d=await r.json();if(!d.ok)return showMsg(d.message||'Código ou senha incorretos.');login.style.display='none';create.style.display='none';area.style.display='block';area.innerHTML='<h3>Olá, '+String(d.cliente.nome).replace(/[<>]/g,'')+' 👋</h3><p>Seu cadastro está protegido. Código: <strong>'+d.cliente.codigo+'</strong></p><p>Status: <strong>'+d.cliente.status+'</strong></p><p>Você já pode continuar o atendimento pelo EuroCompra.</p>';showMsg('Acesso autorizado com sucesso.',true)})})();</script>
+'''
+    s=s.replace('</body>',script+'</body>',1)
+# Hide registration after a successful submission if the existing script exposes formMessage text assignment.
+s=s.replace('formMessage.textContent = data.message || "Cadastro enviado com sucesso.";','formMessage.textContent = data.message || "Cadastro enviado com sucesso — acesso do cliente liberado.";\n      document.getElementById("cadastroForm")?.reset();\n      document.getElementById("cadastroForm")?.closest(".form-box")?.classList.add("cadastro-finalizado");',1)
+s=s.replace('</style>\n</head>','.cadastro-finalizado #cadastroForm{display:none!important}.cadastro-finalizado .form-header p::after{content:" Cadastro concluído. Use seu código e senha no acesso do cliente.";display:block;margin-top:8px;color:#16804b;font-weight:700}</style>\n</head>',1)
+p.write_text(s,encoding='utf-8')
