@@ -1,0 +1,28 @@
+name: Aplicar botão Preços no cabeçalho
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/adicionar_precos_header.py'
+      - '.github/workflows/aplicar-precos-header.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aplicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar alteração
+        run: python3 scripts/adicionar_precos_header.py
+      - name: Commitar alteração
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "feat: adicionar Preços ao cabeçalho [skip ci]"
+          git push
