@@ -1,15 +1,16 @@
 name: Ajustar opções de entrada do cliente
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Ativar acesso do cliente"]
+    types: [completed]
 
 permissions:
   contents: write
 
 jobs:
   ajustar:
-    if: github.actor != 'github-actions[bot]'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,12 +36,10 @@ jobs:
 
           p.write_text(s, encoding='utf-8')
           PY
-      - name: Commitar alterações
+      - name: Publicar ajuste
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git rebase origin/main
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "fix: separar novo cadastro e acesso do cliente [skip ci]"
