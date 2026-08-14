@@ -66,4 +66,5 @@ jobs:
           git add index.html worker.js scripts/ativar_acesso_cliente.py
           git diff --cached --quiet && exit 0
           git commit -m 'feat: acesso do cliente com código e senha'
+          git pull --rebase origin main
           git push
