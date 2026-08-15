@@ -1,21 +1,48 @@
-// EuroCompra — Busca em Lojas v2: botão Buscar no mesmo campo + categoria exclusiva de chocolates.
+// EuroCompra — Lojas da Bélgica: grade profissional 4 colunas + busca.
 (function(){
-  const lojas={'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/en_be/index.html','C&A':'https://www.c-and-a.com/be/en/shop','Primark':'https://www.primark.com/en-be','Mango':'https://shop.mango.com/be/en','Uniqlo':'https://www.uniqlo.com/be/en/','Decathlon':'https://www.decathlon.be/','Carolina Herrera':'https://www.carolinaherrera.com/be/en/','Nike':'https://www.nike.com/be/','Adidas':'https://www.adidas.be/','Foot Locker':'https://www.footlocker.be/','Sephora':'https://www.sephora.be/','Douglas':'https://www.douglas.be/','ICI PARIS XL':'https://www.iciparisxl.be/','MediaMarkt':'https://www.mediamarkt.be/','Coolblue':'https://www.coolblue.be/','Apple':'https://www.apple.com/be/','Fnac':'https://www.nl.fnac.be/','Krëfel':'https://www.krefel.be/','IKEA':'https://www.ikea.com/be/en/','Action':'https://www.action.com/en-be/','JYSK':'https://jysk.be/','CASA':'https://www.casashops.com/en-be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/','Carrefour':'https://www.carrefour.be/','Delhaize':'https://www.delhaize.be/','Colruyt':'https://www.colruyt.be/','DreamLand':'https://www.dreamland.be/','LEGO':'https://www.lego.com/en-be/','Standaard Boekhandel':'https://www.standaardboekhandel.be/','Tom&Co':'https://www.tomandco.com/','Maxi Zoo':'https://www.maxizoo.be/','Louis Vuitton':'https://be.louisvuitton.com/'};
-  const chocolates={'Neuhaus':'https://www.neuhauschocolates.com/be_en/','Leonidas':'https://www.leonidas.com/be_en','Pierre Marcolini':'https://eu.marcolini.com/','Galler':'https://www.galler.com/','Chocolaterie Mary':'https://www.mary.be/','Wittamer':'https://wittamer.com/'};
-  const grupos={Moda:['Zara','H&M','C&A','Primark','Mango','Uniqlo'],Eletrônicos:['MediaMarkt','Coolblue','Apple','Fnac','Krëfel'],Casa:['IKEA','Action','JYSK','CASA','Maisons du Monde'],Doces:Object.keys(chocolates)};
+  const lojas=[
+    ['Zara','Moda','https://www.zara.com/be/'],['H&M','Moda','https://www2.hm.com/en_be/index.html'],['C&A','Moda','https://www.c-and-a.com/be/en/shop'],['Primark','Moda','https://www.primark.com/en-be'],['Mango','Moda','https://shop.mango.com/be/en'],['Uniqlo','Moda','https://www.uniqlo.com/be/en/'],['JBC','Moda','https://www.jbc.be/'],['ZEB','Moda','https://www.zeb.be/'],['Torfs','Calçados','https://www.torfs.be/'],['e5','Moda','https://www.e5.be/'],['Bershka','Moda','https://www.bershka.com/be/'],['Stradivarius','Moda','https://www.stradivarius.com/be/'],['Zalando','Moda','https://www.zalando.be/'],['Foot Locker','Moda','https://www.footlocker.be/'],
+    ['Louis Vuitton','Luxo','https://be.louisvuitton.com/'],['Guess','Moda','https://www.guess.eu/en-be/'],['Calzedonia','Moda','https://www.calzedonia.com/be/'],['Intimissimi','Moda','https://www.intimissimi.com/be/'],
+    ['Sephora','Beleza','https://www.sephora.be/'],['Douglas','Beleza','https://www.douglas.be/'],['KIKO Milano','Beleza','https://www.kikocosmetics.com/'],['ICI PARIS XL','Beleza','https://www.iciparisxl.be/'],['Rituals','Beleza','https://www.rituals.com/'],['Yves Rocher','Beleza','https://www.yves-rocher.be/'],['DI','Beleza','https://www.di.be/'],['April','Beleza','https://www.april-beauty.be/'],['Planet Parfum','Beleza','https://www.planetparfum.com/'],
+    ['MediaMarkt','Eletrônicos','https://www.mediamarkt.be/'],['Coolblue','Eletrônicos','https://www.coolblue.be/'],['Apple','Eletrônicos','https://www.apple.com/be/'],['Fnac','Eletrônicos','https://www.nl.fnac.be/'],['Krëfel','Eletrônicos','https://www.krefel.be/'],['Vanden Borre','Eletrônicos','https://www.vandenborre.be/'],
+    ['LEGO','Brinquedos','https://www.lego.com/en-be/'],['DreamLand','Brinquedos','https://www.dreamland.be/'],['Decathlon','Esportes','https://www.decathlon.be/'],
+    ['IKEA','Casa','https://www.ikea.com/be/en/'],['Action','Casa','https://www.action.com/en-be/'],['JYSK','Casa','https://jysk.be/'],['CASA','Casa','https://www.casashops.com/en-be/'],['Maisons du Monde','Casa','https://www.maisonsdumonde.com/BE/en/'],
+    ['Carrefour','Supermercado','https://www.carrefour.be/'],['Delhaize','Supermercado','https://www.delhaize.be/'],['Colruyt','Supermercado','https://www.colruyt.be/'],['Lidl','Supermercado','https://www.lidl.be/'],['ALDI','Supermercado','https://www.aldi.be/'],
+    ['Standaard Boekhandel','Livros','https://www.standaardboekhandel.be/'],['Tom&Co','Animais','https://www.tomandco.com/'],['Maxi Zoo','Animais','https://www.maxizoo.be/'],
+    ['Leonidas','Chocolates','https://www.leonidas.com/be_en'],['Neuhaus','Chocolates','https://www.neuhauschocolates.com/be_en/'],['Pierre Marcolini','Chocolates','https://eu.marcolini.com/'],['Galler','Chocolates','https://www.galler.com/'],['Chocolaterie Mary','Chocolates','https://www.mary.be/'],['Wittamer','Chocolates','https://wittamer.com/']
+  ];
   const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const esc=v=>String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  const css='margin:0 0 12px;padding:16px 0;border-bottom:1px solid #e7ebf2';
-  function resultado(nome,url){return '<div style="'+css+'"><div style="font-size:17px;font-weight:800;color:#06245c;margin-bottom:4px">'+esc(nome)+'</div><div style="font-size:12px;color:#667085;margin-bottom:10px">Site oficial</div><a href="'+url+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;background:#063b9e;color:#fff;border:0;border-radius:10px;padding:10px 15px;font-weight:800;text-decoration:none;line-height:1">🌐 Abrir site oficial</a></div>';}
-  function mostrarLista(box,key){const lista=(grupos[key]||[]).map(n=>[n,key==='Doces'?chocolates[n]:lojas[n]]).filter(x=>x[1]);let old=box.querySelector('[data-categoria-lista="'+key+'"]');if(old){old.remove();return;}const div=document.createElement('div');div.className='lojas-lista-aberta ativa';div.dataset.categoriaLista=key;div.style.cssText='grid-column:1/-1;background:#fff;border:1px solid #e2e7f0;border-radius:18px;padding:20px;margin-top:0;box-shadow:0 10px 30px rgba(6,59,158,.06)';div.innerHTML='<div style="font-size:18px;font-weight:800;color:#06245c;margin-bottom:4px">'+esc(key)+'</div><div style="font-size:13px;color:#667085;margin-bottom:4px">Sites oficiais</div>'+lista.map(x=>resultado(x[0],x[1])).join('');box.appendChild(div);}
-  function init(){
-    const input=document.getElementById('busca-lojas'),box=document.querySelector('.lojas-categorias');if(!input||!box)return;
-    if(!box.querySelector('[data-categoria="doces"]')){const card=document.createElement('div');card.className='loja-card';card.dataset.categoria='doces';card.innerHTML='<h3>🍫 Doces</h3><p>Somente lojas de chocolate na Bélgica.</p>';box.appendChild(card);}
-    box.querySelectorAll('.loja-card').forEach(card=>{if(card.dataset.formatado==='1')return;card.dataset.formatado='1';card.addEventListener('click',e=>{if(e.target.closest('a'))return;const h=card.querySelector('h3');if(!h)return;const key=h.textContent.replace(/^[^A-Za-zÀ-ÿ]+/,'').trim();mostrarLista(box,key);});});
-    const wrap=input.parentElement;let btn=document.getElementById('buscarLojasBtn');if(!btn){wrap.style.display='flex';wrap.style.gap='8px';wrap.style.alignItems='stretch';input.style.flex='1';input.style.minWidth='0';btn=document.createElement('button');btn.id='buscarLojasBtn';btn.type='button';btn.className='btn primary';btn.textContent='🔎 Buscar';btn.style.whiteSpace='nowrap';btn.style.padding='13px 16px';wrap.appendChild(btn);}
-    let resultados=document.getElementById('lojasResultados');if(!resultados){resultados=document.createElement('div');resultados.id='lojasResultados';resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid #e2e7f0;border-radius:18px;padding:20px;margin-top:0;box-shadow:0 10px 30px rgba(6,59,158,.06)';box.appendChild(resultados);}
-    function buscar(){const q=input.value.trim();if(!q){input.focus();return;}const chave=norm(q);const base=Object.entries(lojas).concat(Object.entries(chocolates));const encontrados=base.filter(([nome])=>norm(nome).includes(chave)||chave.includes(norm(nome)));resultados.style.display='block';resultados.innerHTML=encontrados.length?'<div style="font-size:18px;font-weight:800;color:#06245c;margin-bottom:4px">Resultado da busca</div><div style="font-size:13px;color:#667085;margin-bottom:4px">Sites oficiais</div>'+encontrados.map(x=>resultado(x[0],x[1])).join(''):'<div style="font-weight:800;color:#06245c">Loja não encontrada</div><div style="color:#667085;margin-top:5px">Digite o nome de uma loja ou marca.</div>';}
-    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();buscar();});input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscar();}});
+  const css=`
+    .ec-store-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+    .ec-store-card{min-height:125px!important;background:#fff!important;border:2.5px solid #000!important;border-radius:17px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:12px!important;text-decoration:none!important;color:#000!important;box-shadow:none!important;transition:transform .15s,box-shadow .15s!important}
+    .ec-store-card:hover{transform:translateY(-2px)!important;box-shadow:0 7px 18px rgba(0,0,0,.12)!important}
+    .ec-store-name{font-family:Arial,sans-serif!important;font-size:18px!important;font-weight:900!important;line-height:1.05!important;letter-spacing:-.4px!important}
+    .ec-store-cat{display:block!important;font-family:Arial,sans-serif!important;font-size:9px!important;font-weight:700!important;letter-spacing:.8px!important;text-transform:uppercase!important;margin-top:7px!important;opacity:.5!important}
+    .ec-store-search{display:flex!important;gap:8px!important;margin:0 auto 15px!important}
+    .ec-store-search input{flex:1!important;min-width:0!important;background:#fff!important;color:#000!important;border:2.5px solid #000!important;border-radius:17px!important;padding:14px!important;font-family:Georgia,serif!important}
+    .ec-store-search button{background:#000!important;color:#fff!important;border:2px solid #000!important;border-radius:17px!important;padding:12px 16px!important;font-weight:800!important;white-space:nowrap!important}
+    @media(max-width:700px){.ec-store-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}.ec-store-card{min-height:92px!important;padding:6px!important;border-width:2.3px!important}.ec-store-name{font-size:11px!important;letter-spacing:-.2px!important}.ec-store-cat{font-size:6px!important;margin-top:4px!important}.ec-store-search button{padding:10px 12px!important;font-size:12px!important}}
+  `;
+  function style(){if(document.getElementById('ec-store-grid-style'))return;const s=document.createElement('style');s.id='ec-store-grid-style';s.textContent=css;document.head.appendChild(s)}
+  function build(){
+    const box=document.querySelector('.lojas-categorias'), input=document.getElementById('busca-lojas');
+    if(!box||!input)return;
+    style();
+    if(box.dataset.ecGrid==='1')return;
+    box.dataset.ecGrid='1';
+    box.innerHTML='';
+    box.classList.add('ec-store-grid');
+    lojas.forEach(function(item){
+      const a=document.createElement('a');a.className='ec-store-card';a.href=item[2];a.target='_blank';a.rel='noopener noreferrer';a.dataset.nome=norm(item[0]);a.dataset.cat=norm(item[1]);
+      a.innerHTML='<div><div class="ec-store-name">'+esc(item[0])+'</div><span class="ec-store-cat">'+esc(item[1])+'</span></div>';
+      box.appendChild(a);
+    });
+    const wrap=input.parentElement;
+    wrap.className='ec-store-search';
+    const btn=document.createElement('button');btn.type='button';btn.textContent='🔎 Buscar';wrap.appendChild(btn);
+    function filtrar(){const q=norm(input.value);box.querySelectorAll('.ec-store-card').forEach(function(c){c.style.display=!q||c.dataset.nome.includes(q)||c.dataset.cat.includes(q)?'flex':'none'});}
+    input.addEventListener('input',filtrar);input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();filtrar()}});btn.addEventListener('click',filtrar);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
 })();
