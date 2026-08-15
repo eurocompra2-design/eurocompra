@@ -1,115 +1,33 @@
-name: Corrigir clique das lojas
+name: Ativar busca de lojas
 
 on:
   push:
     branches: [main]
 
-jobs:
-  corrigir:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v4
+permissions:
+  contents: write
 
-      - name: Corrigir lojas e busca
+jobs:
+  ativar-busca:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inserir somente o script da busca
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          css = '''
-/* CORREÇÃO DAS LOJAS */
-.lojas-categorias{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.lojas-categorias .loja-card{cursor:pointer;position:relative}.lojas-categorias .loja-card h3{margin-bottom:7px}.lojas-lista-aberta{display:none;grid-column:1/-1;background:#fff;border:1px solid var(--borda);border-radius:15px;padding:18px;margin-top:-5px}.lojas-lista-aberta.ativa{display:block}.lojas-lista-aberta a{display:block;padding:11px 12px;border-bottom:1px solid var(--borda);color:var(--azul);font-weight:700}.lojas-lista-aberta a:last-child{border-bottom:0}.lojas-lista-aberta a:hover{color:var(--azul)}@media(max-width:850px){.lojas-categorias{grid-template-columns:1fr}}
-'''
-          if '/* CORREÇÃO DAS LOJAS */' not in s:
-              s=s.replace('</style>', css+'  </style>',1)
-          js = r'''
-<script>
-/* CORREÇÃO DAS LOJAS JS */
-(function(){
-  const lojas={
-    'Moda':{'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/en_be/index.html','C&A':'https://www.c-and-a.com/be/en/shop','Primark':'https://www.primark.com/en-be','Mango':'https://shop.mango.com/be/en','Uniqlo':'https://www.uniqlo.com/be/en/'},
-    'Eletrônicos':{'MediaMarkt':'https://www.mediamarkt.be/','Coolblue':'https://www.coolblue.be/','Apple':'https://www.apple.com/be/','Fnac':'https://www.nl.fnac.be/','Krëfel':'https://www.krefel.be/'},
-    'Casa':{'IKEA':'https://www.ikea.com/be/en/','Action':'https://www.action.com/en-be/','JYSK':'https://jysk.be/','Casa':'https://www.casashops.com/en-be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/'}
-  };
-  const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  const container=()=>document.querySelector('.lojas-categorias');
-  function mostrar(cat){
-    const box=container(); if(!box)return;
-    const old=box.querySelector('.lojas-lista-aberta'); if(old)old.remove();
-    const el=document.createElement('div'); el.className='lojas-lista-aberta ativa';
-    el.innerHTML='<strong>'+cat+' — lojas na Bélgica</strong>'+Object.entries(lojas[cat]).map(([nome,url])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+nome+' ↗</a>').join('');
-    box.appendChild(el);
-  }
-  function init(){
-    const input=document.getElementById('busca-lojas'); const box=container(); if(!input||!box)return;
-    const cards=Array.from(box.querySelectorAll('.loja-card'));
-    let resultados=document.getElementById('lojasResultados');
-    if(!resultados){resultados=document.createElement('div');resultados.id='lojasResultados';resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid var(--borda);border-radius:15px;padding:18px';box.appendChild(resultados)}
-    function buscar(){
-      const q=norm(input.value); resultados.innerHTML='';
-      if(!q){resultados.style.display='none';cards.forEach(c=>c.style.display='');return}
-      const encontrados=[];
-      Object.entries(lojas).forEach(([cat,itens])=>Object.entries(itens).forEach(([nome,url])=>{if(norm(nome).includes(q)||norm(cat).includes(q))encontrados.push({cat,nome,url})}));
-      cards.forEach(c=>c.style.display='none'); resultados.style.display='block';
-      if(!encontrados.length){resultados.innerHTML='<strong>Nenhuma loja encontrada.</strong><p style="color:var(--muted);margin:6px 0 0">Digite o nome da loja, marca ou categoria.</p>';return}
-      resultados.innerHTML='<strong>Resultados da busca</strong>'+encontrados.map(x=>'<a href="'+x.url+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 0;border-bottom:1px solid var(--borda);color:var(--azul);font-weight:700">'+x.nome+' <span style="font-weight:400;color:var(--muted)">· '+x.cat+'</span> ↗</a>').join('');
-    }
-    input.addEventListener('input',buscar);
-    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscar()}});
-    cards.forEach(card=>card.addEventListener('click',()=>{const t=norm(card.querySelector('h3')?.textContent);const cat=Object.keys(lojas).find(k=>t.includes(norm(k)));if(cat)mostrar(cat)}));
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
-'''
-          if '/* CORREÇÃO DAS LOJAS JS */' not in s:
-              s=s.replace('</body>',js+'\n</body>',1)
-
-          # Somente a busca: adiciona um índice de busca independente,
-          # sem alterar cadastro, cliente, API, senhas ou qualquer outro recurso.
-          busca = r'''
-<script id="eurocompra-busca-loja-funcional-v1">
-(function(){
-  function iniciarBusca(){
-    const input=document.getElementById('busca-lojas');
-    const box=document.querySelector('.lojas-categorias');
-    if(!input||!box||document.getElementById('eurocompra-busca-resultados')) return;
-    const resultados=document.createElement('div');
-    resultados.id='eurocompra-busca-resultados';
-    resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid var(--borda);border-radius:15px;padding:18px;margin-top:2px';
-    box.appendChild(resultados);
-    const lojas={
-      'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/en_be/index.html','C&A':'https://www.c-and-a.com/be/en/shop','Primark':'https://www.primark.com/en-be','Mango':'https://shop.mango.com/be/en','Uniqlo':'https://www.uniqlo.com/be/en/','JBC':'https://www.jbc.be/','WE Fashion':'https://www.wefashion.com/be_BE/','Decathlon':'https://www.decathlon.be/','Intersport':'https://www.intersport.be/','Torfs':'https://www.torfs.be/','AS Adventure':'https://www.asadventure.com/','ICI PARIS XL':'https://www.iciparisxl.be/','Douglas':'https://www.douglas.be/','Di':'https://www.di.be/','Kruidvat':'https://www.kruidvat.be/','MediaMarkt':'https://www.mediamarkt.be/','Coolblue':'https://www.coolblue.be/','Apple':'https://www.apple.com/be/','Fnac':'https://www.fr.fnac.be/','Vanden Borre':'https://www.vandenborre.be/','Krëfel':'https://www.krefel.be/','IKEA':'https://www.ikea.com/be/en/','JYSK':'https://jysk.be/','Brico':'https://www.brico.be/','Hubo':'https://www.hubo.be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/','Carrefour':'https://www.carrefour.be/','Delhaize':'https://www.delhaize.be/','Colruyt':'https://www.colruyt.be/','Lidl':'https://www.lidl.be/','ALDI':'https://www.aldi.be/','Albert Heijn':'https://www.ah.be/','DreamLand':'https://www.dreamland.be/','Club':'https://www.club.be/','Standaard Boekhandel':'https://www.standaardboekhandel.be/','Tom&Co':'https://www.tomandco.com/','Poils & Plumes':'https://www.poils-plumes.be/'
-    };
-    const normalizar=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    function pesquisar(){
-      const termo=normalizar(input.value).trim();
-      if(!termo){resultados.style.display='none';return;}
-      const encontrados=Object.entries(lojas).filter(([nome])=>normalizar(nome).includes(termo));
-      resultados.style.display='block';
-      if(!encontrados.length){resultados.innerHTML='<strong>Nenhuma loja encontrada.</strong><p style="color:var(--muted);margin:6px 0 0">Tente Zara, H&M, MediaMarkt, IKEA, Decathlon, Sephora ou outra loja.</p>';return;}
-      resultados.innerHTML='<strong>🔎 Lojas encontradas</strong>'+encontrados.map(([nome,url])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 4px;border-bottom:1px solid var(--borda);color:var(--azul);font-weight:700">'+nome+' ↗</a>').join('');
-    }
-    input.addEventListener('input',pesquisar);
-    input.addEventListener('search',pesquisar);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarBusca);else iniciarBusca();
-})();
-</script>
-'''
-          if 'eurocompra-busca-loja-funcional-v1' not in s:
-              s=s.replace('</body>',busca+'\n</body>',1)
-          p.write_text(s,encoding='utf-8')
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="busca-lojas.js"></script>'
+          if tag not in s:
+              s=s.replace('</body>',tag+'</body>',1)
+              p.write_text(s,encoding='utf-8')
           PY
-
-      - name: Publicar correção
+      - name: Publicar
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m "Corrigir somente busca de lojas [busca-loja]"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Ativar busca funcional de lojas"
           git push
