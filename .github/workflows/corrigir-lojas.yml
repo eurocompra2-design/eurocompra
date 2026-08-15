@@ -6,7 +6,6 @@ on:
 
 jobs:
   corrigir:
-    if: ${{ !contains(github.event.head_commit.message, '[lojas-ok]') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,73 +29,43 @@ jobs:
 <script>
 /* CORREÇÃO DAS LOJAS JS */
 (function(){
-  const listas={
-    'Moda':['Zara','H&M','C&A','Primark','Mango','Uniqlo'],
-    'Eletrônicos':['MediaMarkt','Coolblue','Apple','Fnac','Krëfel'],
-    'Casa':['IKEA','Action','JYSK','Casa','Maisons du Monde']
-  };
-  const urls={
-    'zara':'https://www.zara.com/be/','h&m':'https://www2.hm.com/en_be/index.html','c&a':'https://www.c-and-a.com/be/en/shop','primark':'https://www.primark.com/en-be','mango':'https://shop.mango.com/be/en','uniqlo':'https://www.uniqlo.com/be/en/','mediamarkt':'https://www.mediamarkt.be/','coolblue':'https://www.coolblue.be/','apple':'https://www.apple.com/be/','fnac':'https://www.nl.fnac.be/','krëfel':'https://www.krefel.be/','ikea':'https://www.ikea.com/be/en/','action':'https://www.action.com/en-be/','jysk':'https://jysk.be/','casa':'https://www.casashops.com/en-be/','maisons du monde':'https://www.maisonsdumonde.com/BE/en/'
+  const lojas={
+    'Moda':{'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/en_be/index.html','C&A':'https://www.c-and-a.com/be/en/shop','Primark':'https://www.primark.com/en-be','Mango':'https://shop.mango.com/be/en','Uniqlo':'https://www.uniqlo.com/be/en/'},
+    'Eletrônicos':{'MediaMarkt':'https://www.mediamarkt.be/','Coolblue':'https://www.coolblue.be/','Apple':'https://www.apple.com/be/','Fnac':'https://www.nl.fnac.be/','Krëfel':'https://www.krefel.be/'},
+    'Casa':{'IKEA':'https://www.ikea.com/be/en/','Action':'https://www.action.com/en-be/','JYSK':'https://jysk.be/','Casa':'https://www.casashops.com/en-be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/'}
   };
   const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  function openCategory(card){
-    const title=(card.querySelector('h3,strong')||{}).textContent||'';
-    const clean=title.replace(/^[^A-Za-zÀ-ÿ]+/,'').trim();
-    const key=Object.keys(listas).find(k=>norm(clean).includes(norm(k)));
-    if(!key)return false;
-    const parent=card.parentElement;
-    const old=parent.querySelector('.lojas-lista-aberta');
-    if(old)old.remove();
-    const box=document.createElement('div');
-    box.className='lojas-lista-aberta ativa';
-    box.innerHTML='<strong>'+key+' — lojas na Bélgica</strong>'+listas[key].map(n=>{const u=urls[n.toLowerCase()]||'#';return '<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+n+' ↗</a>';}).join('');
-    parent.appendChild(box);
-    return true;
+  const container=()=>document.querySelector('.lojas-categorias');
+  function mostrar(cat){
+    const box=container(); if(!box)return;
+    const old=box.querySelector('.lojas-lista-aberta'); if(old)old.remove();
+    const el=document.createElement('div'); el.className='lojas-lista-aberta ativa';
+    el.innerHTML='<strong>'+cat+' — lojas na Bélgica</strong>'+Object.entries(lojas[cat]).map(([nome,url])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+nome+' ↗</a>').join('');
+    box.appendChild(el);
   }
-  document.addEventListener('click',function(e){
-    const card=e.target.closest('.loja-card');
-    if(!card)return;
-    if(openCategory(card))e.preventDefault();
-  });
-  function setupSearch(){
-    const input=document.querySelector('.lojas-search input');
-    if(!input)return;
-    const container=document.querySelector('.lojas-categorias');
-    if(!container)return;
-    const cards=Array.from(container.querySelectorAll('.loja-card'));
-    const noResult=document.createElement('div');
-    noResult.className='lojas-busca-vazia';
-    noResult.style.cssText='display:none;grid-column:1/-1;padding:18px;text-align:center;background:#fff;border:1px solid var(--borda);border-radius:15px;color:var(--muted)';
-    noResult.textContent='Nenhuma loja encontrada. Tente outro nome, marca ou categoria.';
-    container.appendChild(noResult);
-    input.addEventListener('input',function(){
-      const q=norm(input.value);
-      let count=0;
-      cards.forEach(card=>{
-        const text=norm(card.textContent);
-        const show=!q||text.includes(q);
-        card.style.display=show?'':'none';
-        if(show)count++;
-      });
-      noResult.style.display=count?'none':'block';
-      const opened=container.querySelector('.lojas-lista-aberta');
-      if(opened)opened.remove();
-    });
-    input.addEventListener('keydown',function(e){
-      if(e.key==='Enter'){
-        e.preventDefault();
-        const first=cards.find(c=>c.style.display!=='none');
-        if(first && norm(input.value))openCategory(first);
-      }
-    });
+  function init(){
+    const input=document.getElementById('busca-lojas'); const box=container(); if(!input||!box)return;
+    const cards=Array.from(box.querySelectorAll('.loja-card'));
+    let resultados=document.getElementById('lojasResultados');
+    if(!resultados){resultados=document.createElement('div');resultados.id='lojasResultados';resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid var(--borda);border-radius:15px;padding:18px';box.appendChild(resultados)}
+    function buscar(){
+      const q=norm(input.value); resultados.innerHTML='';
+      if(!q){resultados.style.display='none';cards.forEach(c=>c.style.display='');return}
+      const encontrados=[];
+      Object.entries(lojas).forEach(([cat,itens])=>Object.entries(itens).forEach(([nome,url])=>{if(norm(nome).includes(q)||norm(cat).includes(q))encontrados.push({cat,nome,url})}));
+      cards.forEach(c=>c.style.display='none'); resultados.style.display='block';
+      if(!encontrados.length){resultados.innerHTML='<strong>Nenhuma loja encontrada.</strong><p style="color:var(--muted);margin:6px 0 0">Digite o nome da loja, marca ou categoria.</p>';return}
+      resultados.innerHTML='<strong>Resultados da busca</strong>'+encontrados.map(x=>'<a href="'+x.url+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 0;border-bottom:1px solid var(--borda);color:var(--azul);font-weight:700">'+x.nome+' <span style="font-weight:400;color:var(--muted)">· '+x.cat+'</span> ↗</a>').join('');
+    }
+    input.addEventListener('input',buscar);
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscar()}});
+    cards.forEach(card=>card.addEventListener('click',()=>{const t=norm(card.querySelector('h3')?.textContent);const cat=Object.keys(lojas).find(k=>t.includes(norm(k)));if(cat)mostrar(cat)}));
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupSearch);
-  else setupSearch();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 '''
-          marker='/* CORREÇÃO DAS LOJAS JS */'
-          if marker not in s:
+          if '/* CORREÇÃO DAS LOJAS JS */' not in s:
               s=s.replace('</body>',js+'\n</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
@@ -109,5 +78,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Corrigir busca e abertura das lojas [lojas-ok]"
           git push
-
-# disparo da correção funcional da busca das lojas
