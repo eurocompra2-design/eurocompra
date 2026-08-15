@@ -67,6 +67,41 @@ jobs:
 '''
           if '/* CORREÇÃO DAS LOJAS JS */' not in s:
               s=s.replace('</body>',js+'\n</body>',1)
+
+          # Somente a busca: adiciona um índice de busca independente,
+          # sem alterar cadastro, cliente, API, senhas ou qualquer outro recurso.
+          busca = r'''
+<script id="eurocompra-busca-loja-funcional-v1">
+(function(){
+  function iniciarBusca(){
+    const input=document.getElementById('busca-lojas');
+    const box=document.querySelector('.lojas-categorias');
+    if(!input||!box||document.getElementById('eurocompra-busca-resultados')) return;
+    const resultados=document.createElement('div');
+    resultados.id='eurocompra-busca-resultados';
+    resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid var(--borda);border-radius:15px;padding:18px;margin-top:2px';
+    box.appendChild(resultados);
+    const lojas={
+      'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/en_be/index.html','C&A':'https://www.c-and-a.com/be/en/shop','Primark':'https://www.primark.com/en-be','Mango':'https://shop.mango.com/be/en','Uniqlo':'https://www.uniqlo.com/be/en/','JBC':'https://www.jbc.be/','WE Fashion':'https://www.wefashion.com/be_BE/','Decathlon':'https://www.decathlon.be/','Intersport':'https://www.intersport.be/','Torfs':'https://www.torfs.be/','AS Adventure':'https://www.asadventure.com/','ICI PARIS XL':'https://www.iciparisxl.be/','Douglas':'https://www.douglas.be/','Di':'https://www.di.be/','Kruidvat':'https://www.kruidvat.be/','MediaMarkt':'https://www.mediamarkt.be/','Coolblue':'https://www.coolblue.be/','Apple':'https://www.apple.com/be/','Fnac':'https://www.fr.fnac.be/','Vanden Borre':'https://www.vandenborre.be/','Krëfel':'https://www.krefel.be/','IKEA':'https://www.ikea.com/be/en/','JYSK':'https://jysk.be/','Brico':'https://www.brico.be/','Hubo':'https://www.hubo.be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/','Carrefour':'https://www.carrefour.be/','Delhaize':'https://www.delhaize.be/','Colruyt':'https://www.colruyt.be/','Lidl':'https://www.lidl.be/','ALDI':'https://www.aldi.be/','Albert Heijn':'https://www.ah.be/','DreamLand':'https://www.dreamland.be/','Club':'https://www.club.be/','Standaard Boekhandel':'https://www.standaardboekhandel.be/','Tom&Co':'https://www.tomandco.com/','Poils & Plumes':'https://www.poils-plumes.be/'
+    };
+    const normalizar=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    function pesquisar(){
+      const termo=normalizar(input.value).trim();
+      if(!termo){resultados.style.display='none';return;}
+      const encontrados=Object.entries(lojas).filter(([nome])=>normalizar(nome).includes(termo));
+      resultados.style.display='block';
+      if(!encontrados.length){resultados.innerHTML='<strong>Nenhuma loja encontrada.</strong><p style="color:var(--muted);margin:6px 0 0">Tente Zara, H&M, MediaMarkt, IKEA, Decathlon, Sephora ou outra loja.</p>';return;}
+      resultados.innerHTML='<strong>🔎 Lojas encontradas</strong>'+encontrados.map(([nome,url])=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 4px;border-bottom:1px solid var(--borda);color:var(--azul);font-weight:700">'+nome+' ↗</a>').join('');
+    }
+    input.addEventListener('input',pesquisar);
+    input.addEventListener('search',pesquisar);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarBusca);else iniciarBusca();
+})();
+</script>
+'''
+          if 'eurocompra-busca-loja-funcional-v1' not in s:
+              s=s.replace('</body>',busca+'\n</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
 
@@ -76,5 +111,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Corrigir busca e abertura das lojas [lojas-ok]"
+          git commit -m "Corrigir somente busca de lojas [busca-loja]"
           git push
