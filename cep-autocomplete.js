@@ -1,198 +1,48 @@
 // EuroCompra — preenchimento automático do endereço pelo CEP brasileiro.
 (function () {
-  async function consultar(url) {
-    const controlador = new AbortController();
-    const timeout = setTimeout(() => controlador.abort(), 8000);
-    try { const resposta = await fetch(url, { headers: { Accept: 'application/json' }, signal: controlador.signal, cache: 'no-store' }); if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`); return await resposta.json(); }
-    finally { clearTimeout(timeout); }
-  }
-  async function buscarCEP(cep) {
-    const valor = cep.value.replace(/\D/g, ''); if (valor.length !== 8 || cep.dataset.cepConsultando === '1') return;
-    cep.dataset.cepConsultando = '1'; cep.setCustomValidity('');
-    try {
-      let dados; try { dados = await consultar(`https://viacep.com.br/ws/${valor}/json/`); } catch (erro) { dados = await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`); }
-      if (dados.erro) { cep.setCustomValidity('CEP não encontrado. Confira o número informado.'); return; }
-      const endereco = document.getElementById('endereco'), bairro = document.getElementById('bairro'), cidade = document.getElementById('cidade'), estado = document.getElementById('estado');
-      if (endereco) endereco.value = dados.logradouro || dados.street || ''; if (bairro) bairro.value = dados.bairro || dados.neighborhood || ''; if (cidade) cidade.value = dados.localidade || dados.city || ''; if (estado) estado.value = dados.uf || dados.state || '';
-      cep.setCustomValidity(''); const numero = document.getElementById('numero'); if (numero) numero.focus();
-    } catch (erro) { console.error('Erro ao consultar CEP:', erro); cep.setCustomValidity(''); } finally { cep.dataset.cepConsultando = '0'; }
-  }
-  document.addEventListener('input', function (event) { if (event.target && event.target.id === 'cep') { const valor = event.target.value.replace(/\D/g, ''); if (valor.length === 8) buscarCEP(event.target); } });
-  document.addEventListener('blur', function (event) { if (event.target && event.target.id === 'cep') buscarCEP(event.target); }, true);
+  async function consultar(url) { const controlador=new AbortController(); const timeout=setTimeout(()=>controlador.abort(),8000); try { const resposta=await fetch(url,{headers:{Accept:'application/json'},signal:controlador.signal,cache:'no-store'}); if(!resposta.ok) throw new Error(`HTTP ${resposta.status}`); return await resposta.json(); } finally { clearTimeout(timeout); } }
+  async function buscarCEP(cep) { const valor=cep.value.replace(/\D/g,''); if(valor.length!==8||cep.dataset.cepConsultando==='1') return; cep.dataset.cepConsultando='1'; cep.setCustomValidity(''); try { let dados; try { dados=await consultar(`https://viacep.com.br/ws/${valor}/json/`); } catch(erro) { dados=await consultar(`https://brasilapi.com.br/api/cep/v2/${valor}`); } if(dados.erro){cep.setCustomValidity('CEP não encontrado. Confira o número informado.');return;} const endereco=document.getElementById('endereco'),bairro=document.getElementById('bairro'),cidade=document.getElementById('cidade'),estado=document.getElementById('estado'); if(endereco)endereco.value=dados.logradouro||dados.street||'';if(bairro)bairro.value=dados.bairro||dados.neighborhood||'';if(cidade)cidade.value=dados.localidade||dados.city||'';if(estado)estado.value=dados.uf||dados.state||'';cep.setCustomValidity('');const numero=document.getElementById('numero');if(numero)numero.focus(); } catch(erro){console.error('Erro ao consultar CEP:',erro);cep.setCustomValidity('');} finally{cep.dataset.cepConsultando='0';} }
+  document.addEventListener('input',event=>{if(event.target&&event.target.id==='cep'){const valor=event.target.value.replace(/\D/g,'');if(valor.length===8)buscarCEP(event.target);}}); document.addEventListener('blur',event=>{if(event.target&&event.target.id==='cep')buscarCEP(event.target);},true);
 })();
 
 // EuroCompra — envio definitivo do cadastro.
-(function () {
-  const original = document.getElementById('cadastroForm'); if (!original) return;
-  const form = original.cloneNode(true); original.replaceWith(form);
-  const message = document.getElementById('formMessage'); const API_URL = 'https://eurocompra-api.eurocompra2.workers.dev/api/cadastro'; let enviando = false;
-  function mostrarMensagem(texto, sucesso = false) { if (!message) return; message.textContent = texto; message.style.display = 'block'; message.style.background = sucesso ? '#eaf8f0' : '#fff4e5'; message.style.color = sucesso ? '#16804b' : '#9a5b00'; message.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  function mostrarSucesso(codigo) { const formBox = form.closest('.form-box'); if (!formBox) return; setTimeout(() => { formBox.innerHTML = `<div style="text-align:center;padding:35px 10px;"><div style="font-size:52px;margin-bottom:14px;">✅</div><h2 style="color:#06245c;margin-bottom:10px;">Cadastro enviado!</h2><p style="color:#667085;margin-bottom:8px;">Recebemos seus dados com segurança.</p><p style="color:#063b9e;font-weight:700;">Código do cadastro: ${codigo || 'recebido'}</p><p style="color:#667085;margin-top:12px;font-size:14px;">Em breve entraremos em contato.</p></div>`; }, 1200); }
-  form.addEventListener('submit', async function (event) {
-    event.preventDefault(); event.stopImmediatePropagation(); if (enviando) return; if (!form.checkValidity()) { form.reportValidity(); return; }
-    enviando = true; const botao = form.querySelector('button[type="submit"]'); const textoOriginal = botao ? botao.textContent : '';
-    if (botao) { botao.disabled = true; botao.textContent = 'Enviando...'; botao.style.opacity = '0.7'; } mostrarMensagem('Enviando cadastro...');
-    try {
-      const dados = Object.fromEntries(new FormData(form)); const controlador = new AbortController(); const timeout = setTimeout(() => controlador.abort(), 15000); let resposta;
-      try { resposta = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados), signal: controlador.signal }); } finally { clearTimeout(timeout); }
-      const texto = await resposta.text(); let resultado; try { resultado = JSON.parse(texto); } catch { resultado = { ok: false, message: texto || `Erro HTTP ${resposta.status}` }; }
-      if (!resposta.ok || !resultado.ok) throw new Error(resultado.message || `Não foi possível enviar o cadastro (HTTP ${resposta.status}).`);
-      const codigo = resultado.codigo || ''; mostrarMensagem(`Cadastro enviado com sucesso! Código: ${codigo || 'recebido'}.`, true); mostrarSucesso(codigo);
-    } catch (erro) { console.error('Erro no envio do cadastro:', erro); const mensagem = erro.name === 'AbortError' ? 'O servidor demorou para responder. Tente novamente em alguns segundos.' : (erro.message || 'Não foi possível enviar o cadastro.'); mostrarMensagem(`Não foi possível enviar o cadastro: ${mensagem}`); }
-    finally { enviando = false; if (botao && document.body.contains(botao)) { botao.disabled = false; botao.textContent = textoOriginal; botao.style.opacity = '1'; } }
-  });
-})();
+(function () { const original=document.getElementById('cadastroForm');if(!original)return;const form=original.cloneNode(true);original.replaceWith(form);const message=document.getElementById('formMessage');const API_URL='https://eurocompra-api.eurocompra2.workers.dev/api/cadastro';let enviando=false;function mostrarMensagem(texto,sucesso=false){if(!message)return;message.textContent=texto;message.style.display='block';message.style.background=sucesso?'#eaf8f0':'#fff4e5';message.style.color=sucesso?'#16804b':'#9a5b00';message.scrollIntoView({behavior:'smooth',block:'center'});}function mostrarSucesso(codigo){const formBox=form.closest('.form-box');if(!formBox)return;setTimeout(()=>{formBox.innerHTML=`<div style="text-align:center;padding:35px 10px;"><div style="font-size:52px;margin-bottom:14px;">✅</div><h2 style="color:#06245c;margin-bottom:10px;">Cadastro enviado!</h2><p style="color:#667085;margin-bottom:8px;">Recebemos seus dados com segurança.</p><p style="color:#063b9e;font-weight:700;">Código do cadastro: ${codigo||'recebido'}</p><p style="color:#667085;margin-top:12px;font-size:14px;">Em breve entraremos em contato.</p></div>`;},1200);}form.addEventListener('submit',async function(event){event.preventDefault();event.stopImmediatePropagation();if(enviando)return;if(!form.checkValidity()){form.reportValidity();return;}enviando=true;const botao=form.querySelector('button[type="submit"]');const textoOriginal=botao?botao.textContent:'';if(botao){botao.disabled=true;botao.textContent='Enviando...';botao.style.opacity='.7';}mostrarMensagem('Enviando cadastro...');try{const dados=Object.fromEntries(new FormData(form));const controlador=new AbortController();const timeout=setTimeout(()=>controlador.abort(),15000);let resposta;try{resposta=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados),signal:controlador.signal});}finally{clearTimeout(timeout);}const texto=await resposta.text();let resultado;try{resultado=JSON.parse(texto);}catch{resultado={ok:false,message:texto||`Erro HTTP ${resposta.status}`};}if(!resposta.ok||!resultado.ok)throw new Error(resultado.message||`Não foi possível enviar o cadastro (HTTP ${resposta.status}).`);const codigo=resultado.codigo||'';mostrarMensagem(`Cadastro enviado com sucesso! Código: ${codigo||'recebido'}.`,true);mostrarSucesso(codigo);}catch(erro){console.error('Erro no envio do cadastro:',erro);const mensagem=erro.name==='AbortError'?'O servidor demorou para responder. Tente novamente em alguns segundos.':(erro.message||'Não foi possível enviar o cadastro.');mostrarMensagem(`Não foi possível enviar o cadastro: ${mensagem}`);}finally{enviando=false;if(botao&&document.body.contains(botao)){botao.disabled=false;botao.textContent=textoOriginal;botao.style.opacity='1';}}});})();
 
 // EuroCompra — buscador funcional integrado à página inicial.
-(function () {
-  function adicionarBuscador() {
-    if (document.getElementById('eurocompra-buscador-home')) return; const hero = document.querySelector('section.hero'); if (!hero) return;
-    const section = document.createElement('section'); section.id = 'eurocompra-buscador-home'; section.style.cssText = 'background:#f5f7fb;padding:55px 0;border-top:1px solid #e2e7f0;border-bottom:1px solid #e2e7f0;';
-    section.innerHTML = `<div class="container"><div style="text-align:center;max-width:760px;margin:0 auto 25px;"><span style="display:inline-flex;padding:7px 12px;border-radius:50px;background:#eaf1ff;color:#063b9e;font-size:13px;font-weight:700;margin-bottom:12px;">🔎 CONSULTE ANTES DE COMPRAR</span><h2 style="font-size:34px;line-height:1.15;color:#06245c;margin-bottom:10px;">Seu produto pode ser enviado para o Brasil?</h2><p style="color:#667085;margin:0;">Pesquise produto, marca ou modelo. O buscador mostra uma orientação inicial e explica o que precisa ser verificado antes da compra.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:20px;box-shadow:0 18px 50px rgba(6,59,158,.10);overflow:hidden;"><iframe src="buscador.html" title="Buscador de produtos EuroCompra" loading="lazy" style="display:block;width:100%;height:720px;border:0;background:#f5f8ff;"></iframe></div><div style="text-align:center;margin-top:16px;"><a href="buscador.html" style="color:#063b9e;font-weight:700;font-size:14px;">Abrir buscador em página completa →</a></div></div>`;
-    hero.insertAdjacentElement('afterend', section);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', adicionarBuscador); else adicionarBuscador();
-})();
+(function(){function adicionarBuscador(){if(document.getElementById('eurocompra-buscador-home'))return;const hero=document.querySelector('section.hero');if(!hero)return;const section=document.createElement('section');section.id='eurocompra-buscador-home';section.style.cssText='background:#f5f7fb;padding:55px 0;border-top:1px solid #e2e7f0;border-bottom:1px solid #e2e7f0;';section.innerHTML=`<div class="container"><div style="text-align:center;max-width:760px;margin:0 auto 25px;"><span style="display:inline-flex;padding:7px 12px;border-radius:50px;background:#eaf1ff;color:#063b9e;font-size:13px;font-weight:700;margin-bottom:12px;">🔎 CONSULTE ANTES DE COMPRAR</span><h2 style="font-size:34px;line-height:1.15;color:#06245c;margin-bottom:10px;">Seu produto pode ser enviado para o Brasil?</h2><p style="color:#667085;margin:0;">Pesquise produto, marca ou modelo. O buscador mostra uma orientação inicial e explica o que precisa ser verificado antes da compra.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:20px;box-shadow:0 18px 50px rgba(6,59,158,.10);overflow:hidden;"><iframe src="buscador.html" title="Buscador de produtos EuroCompra" loading="lazy" style="display:block;width:100%;height:720px;border:0;background:#f5f8ff;"></iframe></div><div style="text-align:center;margin-top:16px;"><a href="buscador.html" style="color:#063b9e;font-weight:700;font-size:14px;">Abrir buscador em página completa →</a></div></div>`;hero.insertAdjacentElement('afterend',section);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',adicionarBuscador);else adicionarBuscador();})();
 
 // EuroCompra — melhora o botão "Conhecer serviços" para explicar o Personal Shopper.
-(function () {
-  function ajustarPersonalShopper() {
-    const botoes = Array.from(document.querySelectorAll('.hero-buttons a'));
-    const botao = botoes.find(el => el.textContent.trim().toLowerCase().includes('conhecer serviços'));
-    if (!botao || document.getElementById('personal-shopper-home')) return;
-    botao.textContent = 'Como funciona o Personal Shopper'; botao.href = '#personal-shopper-home';
-    const hero = document.querySelector('section.hero'); if (!hero) return;
-    const section = document.createElement('section'); section.id = 'personal-shopper-home'; section.style.cssText = 'background:#fff;padding:65px 0;border-bottom:1px solid #e2e7f0;';
-    section.innerHTML = `<div class="container"><div style="max-width:900px;margin:0 auto;background:#f5f8ff;border:1px solid #e2e7f0;border-radius:22px;padding:30px;box-shadow:0 18px 50px rgba(6,59,158,.08);"><div style="text-align:center;margin-bottom:22px;"><span style="display:inline-flex;padding:7px 12px;border-radius:50px;background:#eaf1ff;color:#063b9e;font-size:13px;font-weight:700;margin-bottom:12px;">🛍️ PERSONAL SHOPPER EUROCOMPRA</span><h2 style="font-size:34px;line-height:1.15;color:#06245c;margin-bottom:12px;">O que faz um Personal Shopper?</h2><p style="color:#667085;max-width:720px;margin:auto;">É o serviço para quem quer comprar na Bélgica com ajuda de uma pessoa que pesquisa, verifica e orienta todo o processo de compra.</p></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">🔎</div><h3 style="color:#06245c;margin-bottom:6px;">Pesquisa</h3><p style="color:#667085;font-size:14px;">Ajudamos a encontrar o produto, loja, modelo e opções disponíveis na Bélgica.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">🧾</div><h3 style="color:#06245c;margin-bottom:6px;">Verificação</h3><p style="color:#667085;font-size:14px;">Orientamos sobre preço, disponibilidade e informações importantes antes da compra.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">📦</div><h3 style="color:#06245c;margin-bottom:6px;">Processo</h3><p style="color:#667085;font-size:14px;">Depois da compra, orientamos sobre o recebimento e o serviço de envio/redirecionamento contratado.</p></div></div><div style="margin-top:20px;padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:13px;color:#7c2d12;font-size:13px;line-height:1.55;"><b>Importante:</b> o Personal Shopper é um serviço de assistência e orientação. A disponibilidade do produto, regras de importação, transporte e demais condições são analisadas caso a caso.</div><div style="text-align:center;margin-top:22px;"><a href="#cadastro" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:13px 20px;background:#063b9e;color:#fff;font-weight:700;">Quero usar o Personal Shopper</a></div></div></div>`;
-    hero.insertAdjacentElement('afterend', section);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ajustarPersonalShopper); else ajustarPersonalShopper();
-})();
+(function(){function ajustarPersonalShopper(){const botoes=Array.from(document.querySelectorAll('.hero-buttons a'));const botao=botoes.find(el=>el.textContent.trim().toLowerCase().includes('conhecer serviços'));if(!botao||document.getElementById('personal-shopper-home'))return;botao.textContent='Como funciona o Personal Shopper';botao.href='#personal-shopper-home';const hero=document.querySelector('section.hero');if(!hero)return;const section=document.createElement('section');section.id='personal-shopper-home';section.style.cssText='background:#fff;padding:65px 0;border-bottom:1px solid #e2e7f0;';section.innerHTML=`<div class="container"><div style="max-width:900px;margin:0 auto;background:#f5f8ff;border:1px solid #e2e7f0;border-radius:22px;padding:30px;box-shadow:0 18px 50px rgba(6,59,158,.08);"><div style="text-align:center;margin-bottom:22px;"><span style="display:inline-flex;padding:7px 12px;border-radius:50px;background:#eaf1ff;color:#063b9e;font-size:13px;font-weight:700;margin-bottom:12px;">🛍️ PERSONAL SHOPPER EUROCOMPRA</span><h2 style="font-size:34px;line-height:1.15;color:#06245c;margin-bottom:12px;">O que faz um Personal Shopper?</h2><p style="color:#667085;max-width:720px;margin:auto;">É o serviço para quem quer comprar na Bélgica com ajuda de uma pessoa que pesquisa, verifica e orienta todo o processo de compra.</p></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">🔎</div><h3 style="color:#06245c;margin-bottom:6px;">Pesquisa</h3><p style="color:#667085;font-size:14px;">Ajudamos a encontrar o produto, loja, modelo e opções disponíveis na Bélgica.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">🧾</div><h3 style="color:#06245c;margin-bottom:6px;">Verificação</h3><p style="color:#667085;font-size:14px;">Orientamos sobre preço, disponibilidade e informações importantes antes da compra.</p></div><div style="background:#fff;border:1px solid #e2e7f0;border-radius:16px;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">📦</div><h3 style="color:#06245c;margin-bottom:6px;">Processo</h3><p style="color:#667085;font-size:14px;">Depois da compra, orientamos sobre o recebimento e o serviço de envio/redirecionamento contratado.</p></div></div><div style="margin-top:20px;padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:13px;color:#7c2d12;font-size:13px;line-height:1.55;"><b>Importante:</b> o Personal Shopper é um serviço de assistência e orientação. A disponibilidade do produto, regras de importação, transporte e demais condições são analisadas caso a caso.</div><div style="text-align:center;margin-top:22px;"><a href="#cadastro" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:13px 20px;background:#063b9e;color:#fff;font-weight:700;">Quero usar o Personal Shopper</a></div></div></div>`;hero.insertAdjacentElement('afterend',section);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ajustarPersonalShopper);else ajustarPersonalShopper();})();
 
-// EuroCompra — categorias de lojas expansíveis, sem alterar o cadastro ou demais seções.
-(function () {
-  function configurarCategoriasLojas() {
-    const container = document.querySelector('.lojas-categorias');
-    if (!container || container.dataset.configurado === '1') return;
-    container.dataset.configurado = '1';
-    const categorias = [
-      { nome: '👗 Moda e vestuário', descricao: 'Roupas, calçados e marcas europeias.', lojas: [
-        ['Zara', 'Moda e acessórios'], ['H&M', 'Moda e básicos'], ['C&A', 'Roupas e acessórios'], ['JBC', 'Moda na Bélgica'], ['Primark', 'Moda e básicos'], ['WE Fashion', 'Moda e roupas']
-      ]},
-      { nome: '👟 Calçados e esportes', descricao: 'Tênis, calçados, roupas e equipamentos esportivos.', lojas: [
-        ['Decathlon', 'Esportes e equipamentos'], ['Intersport', 'Artigos esportivos'], ['Torfs', 'Calçados e acessórios'], ['AS Adventure', 'Outdoor e esportes']
-      ]},
-      { nome: '💄 Beleza e perfumes', descricao: 'Perfumes, cosméticos e cuidados pessoais.', lojas: [
-        ['ICI PARIS XL', 'Perfumes e cosméticos'], ['Douglas', 'Beleza e perfumes'], ['Di', 'Cosméticos e cuidados pessoais'], ['Kruidvat', 'Saúde, beleza e cuidados pessoais']
-      ]},
-      { nome: '📱 Eletrônicos e tecnologia', descricao: 'Celulares, computadores, eletrônicos e acessórios.', lojas: [
-        ['MediaMarkt', 'Eletrônicos e tecnologia'], ['Fnac', 'Tecnologia, livros e entretenimento'], ['Vanden Borre', 'Eletrônicos e eletrodomésticos'], ['Krëfel', 'Eletrônicos e eletrodomésticos'], ['Coolblue', 'Eletrônicos e tecnologia']
-      ]},
-      { nome: '🏠 Casa e decoração', descricao: 'Móveis, decoração, bricolagem e produtos para o lar.', lojas: [
-        ['IKEA', 'Móveis e decoração'], ['JYSK', 'Casa e móveis'], ['Brico', 'Bricolagem e casa'], ['Hubo', 'Casa e bricolagem'], ['Maisons du Monde', 'Móveis e decoração']
-      ]},
-      { nome: '🛒 Supermercados e alimentação', descricao: 'Supermercados e compras do dia a dia.', lojas: [
-        ['Carrefour', 'Supermercado e alimentação'], ['Delhaize', 'Supermercado e alimentação'], ['Colruyt', 'Supermercado e alimentação'], ['Lidl', 'Supermercado e alimentação'], ['ALDI', 'Supermercado e alimentação'], ['Albert Heijn', 'Supermercado e alimentação']
-      ]},
-      { nome: '🧸 Crianças e brinquedos', descricao: 'Roupas infantis, brinquedos e produtos para crianças.', lojas: [
-        ['DreamLand', 'Brinquedos e crianças'], ['JBC', 'Moda infantil e familiar'], ['C&A', 'Moda infantil e familiar']
-      ]},
-      { nome: '📚 Livros e papelaria', descricao: 'Livros, material escolar e entretenimento.', lojas: [
-        ['Fnac', 'Livros, tecnologia e entretenimento'], ['Club', 'Livros e papelaria'], ['Standaard Boekhandel', 'Livros e papelaria']
-      ]},
-      { nome: '🐶 Animais', descricao: 'Produtos e acessórios para animais de estimação.', lojas: [
-        ['Tom&Co', 'Produtos para animais'], ['Poils & Plumes', 'Produtos para animais']
-      ]}
-    ];
-    container.innerHTML = '';
-    categorias.forEach((categoria, indice) => {
-      const bloco = document.createElement('div');
-      bloco.style.cssText = 'margin-bottom:14px;border:1px solid #e2e7f0;border-radius:16px;background:#fff;overflow:hidden;';
-      const botao = document.createElement('button');
-      botao.type = 'button'; botao.setAttribute('aria-expanded','false');
-      botao.style.cssText = 'width:100%;padding:18px 20px;border:0;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#06245c;display:flex;justify-content:space-between;align-items:center;';
-      botao.innerHTML = `<span><strong style="font-size:18px;">${categoria.nome}</strong><small style="display:block;color:#667085;margin-top:4px;">${categoria.descricao}</small></span><span class="euro-seta" style="font-size:20px;color:#063b9e;">＋</span>`;
-      const conteudo = document.createElement('div');
-      conteudo.hidden = true; conteudo.style.cssText = 'padding:0 16px 16px;';
-      const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;';
-      const urls = {
-        'Zara':'https://www.zara.com/be/',
-        'H&M':'https://www2.hm.com/fr_be/index.html',
-        'C&A':'https://www.c-and-a.com/be/fr/shop',
-        'JBC':'https://www.jbc.be/',
-        'Primark':'https://www.primark.com/en-be',
-        'WE Fashion':'https://www.wefashion.com/be_BE/',
-        'Decathlon':'https://www.decathlon.be/',
-        'Intersport':'https://www.intersport.be/',
-        'Torfs':'https://www.torfs.be/',
-        'AS Adventure':'https://www.asadventure.com/',
-        'ICI PARIS XL':'https://www.iciparisxl.be/',
-        'Douglas':'https://www.douglas.be/',
-        'Di':'https://www.di.be/',
-        'Kruidvat':'https://www.kruidvat.be/',
-        'MediaMarkt':'https://www.mediamarkt.be/',
-        'Fnac':'https://www.fr.fnac.be/',
-        'Vanden Borre':'https://www.vandenborre.be/',
-        'Krëfel':'https://www.krefel.be/',
-        'Coolblue':'https://www.coolblue.be/',
-        'IKEA':'https://www.ikea.com/be/en/',
-        'JYSK':'https://jysk.be/',
-        'Brico':'https://www.brico.be/',
-        'Hubo':'https://www.hubo.be/',
-        'Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/',
-        'Carrefour':'https://www.carrefour.be/',
-        'Delhaize':'https://www.delhaize.be/',
-        'Colruyt':'https://www.colruyt.be/',
-        'Lidl':'https://www.lidl.be/',
-        'ALDI':'https://www.aldi.be/',
-        'Albert Heijn':'https://www.ah.be/',
-        'DreamLand':'https://www.dreamland.be/',
-        'Club':'https://www.club.be/',
-        'Standaard Boekhandel':'https://www.standaardboekhandel.be/',
-        'Tom&Co':'https://www.tomandco.com/',
-        'Poils & Plumes':'https://www.poils-plumes.be/'
-      };
-
-      categoria.lojas.forEach(loja => {
-        const card = document.createElement('a');
-        card.href = urls[loja[0]] || '#';
-        card.target = '_blank';
-        card.rel = 'noopener noreferrer';
-        card.style.cssText = 'display:block;padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;color:inherit;text-decoration:none;cursor:pointer;transition:.2s ease;';
-        card.innerHTML = `<strong style="display:block;color:#06245c;">${loja[0]}</strong><small style="display:block;color:#667085;margin-top:4px;">${loja[1]} · Abrir site oficial ↗</small>`;
-        grid.appendChild(card);
-      });
-      conteudo.appendChild(grid); bloco.appendChild(botao); bloco.appendChild(conteudo); container.appendChild(bloco);
-      botao.addEventListener('click', () => { const aberto = botao.getAttribute('aria-expanded') === 'true'; botao.setAttribute('aria-expanded', String(!aberto)); conteudo.hidden = aberto; botao.querySelector('.euro-seta').textContent = aberto ? '＋' : '−'; });
-    });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', configurarCategoriasLojas); else configurarCategoriasLojas();
-})();
+// EuroCompra — categorias de lojas expansíveis.
+(function(){function configurarCategoriasLojas(){const container=document.querySelector('.lojas-categorias');if(!container||container.dataset.configurado==='1')return;container.dataset.configurado='1';const categorias=[{nome:'👗 Moda e vestuário',descricao:'Roupas, calçados e marcas europeias.',lojas:[['Zara','Moda e acessórios'],['H&M','Moda e básicos'],['C&A','Roupas e acessórios'],['JBC','Moda na Bélgica'],['Primark','Moda e básicos'],['WE Fashion','Moda e roupas']]},{nome:'👟 Calçados e esportes',descricao:'Tênis, calçados, roupas e equipamentos esportivos.',lojas:[['Decathlon','Esportes e equipamentos'],['Intersport','Artigos esportivos'],['Torfs','Calçados e acessórios'],['AS Adventure','Outdoor e esportes']]},{nome:'💄 Beleza e perfumes',descricao:'Perfumes, cosméticos e cuidados pessoais.',lojas:[['ICI PARIS XL','Perfumes e cosméticos'],['Douglas','Beleza e perfumes'],['Di','Cosméticos e cuidados pessoais'],['Kruidvat','Saúde, beleza e cuidados pessoais']]},{nome:'📱 Eletrônicos e tecnologia',descricao:'Celulares, computadores, eletrônicos e acessórios.',lojas:[['MediaMarkt','Eletrônicos e tecnologia'],['Fnac','Tecnologia, livros e entretenimento'],['Vanden Borre','Eletrônicos e eletrodomésticos'],['Krëfel','Eletrônicos e eletrodomésticos'],['Coolblue','Eletrônicos e tecnologia']]},{nome:'🏠 Casa e decoração',descricao:'Móveis, decoração, bricolagem e produtos para o lar.',lojas:[['IKEA','Móveis e decoração'],['JYSK','Casa e móveis'],['Brico','Bricolagem e casa'],['Hubo','Casa e bricolagem'],['Maisons du Monde','Móveis e decoração']]},{nome:'🛒 Supermercados e alimentação',descricao:'Supermercados e compras do dia a dia.',lojas:[['Carrefour','Supermercado e alimentação'],['Delhaize','Supermercado e alimentação'],['Colruyt','Supermercado e alimentação'],['Lidl','Supermercado e alimentação'],['ALDI','Supermercado e alimentação'],['Albert Heijn','Supermercado e alimentação']]},{nome:'🧸 Crianças e brinquedos',descricao:'Roupas infantis, brinquedos e produtos para crianças.',lojas:[['DreamLand','Brinquedos e crianças'],['JBC','Moda infantil e familiar'],['C&A','Moda infantil e familiar']]},{nome:'📚 Livros e papelaria',descricao:'Livros, material escolar e entretenimento.',lojas:[['Fnac','Livros, tecnologia e entretenimento'],['Club','Livros e papelaria'],['Standaard Boekhandel','Livros e papelaria']]},{nome:'🐶 Animais',descricao:'Produtos e acessórios para animais de estimação.',lojas:[['Tom&Co','Produtos para animais'],['Poils & Plumes','Produtos para animais']]}];container.innerHTML='';const urls={'Zara':'https://www.zara.com/be/','H&M':'https://www2.hm.com/fr_be/index.html','C&A':'https://www.c-and-a.com/be/fr/shop','JBC':'https://www.jbc.be/','Primark':'https://www.primark.com/en-be','WE Fashion':'https://www.wefashion.com/be_BE/','Decathlon':'https://www.decathlon.be/','Intersport':'https://www.intersport.be/','Torfs':'https://www.torfs.be/','AS Adventure':'https://www.asadventure.com/','ICI PARIS XL':'https://www.iciparisxl.be/','Douglas':'https://www.douglas.be/','Di':'https://www.di.be/','Kruidvat':'https://www.kruidvat.be/','MediaMarkt':'https://www.mediamarkt.be/','Fnac':'https://www.fr.fnac.be/','Vanden Borre':'https://www.vandenborre.be/','Krëfel':'https://www.krefel.be/','Coolblue':'https://www.coolblue.be/','IKEA':'https://www.ikea.com/be/en/','JYSK':'https://jysk.be/','Brico':'https://www.brico.be/','Hubo':'https://www.hubo.be/','Maisons du Monde':'https://www.maisonsdumonde.com/BE/en/','Carrefour':'https://www.carrefour.be/','Delhaize':'https://www.delhaize.be/','Colruyt':'https://www.colruyt.be/','Lidl':'https://www.lidl.be/','ALDI':'https://www.aldi.be/','Albert Heijn':'https://www.ah.be/','DreamLand':'https://www.dreamland.be/','Club':'https://www.club.be/','Standaard Boekhandel':'https://www.standaardboekhandel.be/','Tom&Co':'https://www.tomandco.com/','Poils & Plumes':'https://www.poils-plumes.be/'};categorias.forEach(categoria=>{const bloco=document.createElement('div');bloco.style.cssText='margin-bottom:14px;border:1px solid #e2e7f0;border-radius:16px;background:#fff;overflow:hidden;';const botao=document.createElement('button');botao.type='button';botao.setAttribute('aria-expanded','false');botao.style.cssText='width:100%;padding:18px 20px;border:0;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#06245c;display:flex;justify-content:space-between;align-items:center;';botao.innerHTML=`<span><strong style="font-size:18px;">${categoria.nome}</strong><small style="display:block;color:#667085;margin-top:4px;">${categoria.descricao}</small></span><span class="euro-seta" style="font-size:20px;color:#063b9e;">＋</span>`;const conteudo=document.createElement('div');conteudo.hidden=true;conteudo.style.cssText='padding:0 16px 16px;';const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;';categoria.lojas.forEach(loja=>{const card=document.createElement('a');card.href=urls[loja[0]]||'#';card.target='_blank';card.rel='noopener noreferrer';card.style.cssText='display:block;padding:14px;border:1px solid #e2e7f0;border-radius:12px;background:#f8faff;color:inherit;text-decoration:none;cursor:pointer;transition:.2s ease;';card.innerHTML=`<strong style="display:block;color:#06245c;">${loja[0]}</strong><small style="display:block;color:#667085;margin-top:4px;">${loja[1]} · Abrir site oficial ↗</small>`;grid.appendChild(card);});conteudo.appendChild(grid);bloco.appendChild(botao);bloco.appendChild(conteudo);container.appendChild(bloco);botao.addEventListener('click',()=>{const aberto=botao.getAttribute('aria-expanded')==='true';botao.setAttribute('aria-expanded',String(!aberto));conteudo.hidden=aberto;botao.querySelector('.euro-seta').textContent=aberto?'＋':'−';});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',configurarCategoriasLojas);else configurarCategoriasLojas();})();
 
 // EuroCompra — conecta o botão Preços ao arquivo precos.html.
-(function () {
-  function adicionarBotaoPrecos() {
-    const nav = document.querySelector('header nav');
-    if (!nav || nav.querySelector('a[href="precos.html"]')) return;
+(function(){function adicionarBotaoPrecos(){const nav=document.querySelector('header nav');if(!nav||nav.querySelector('a[href="precos.html"]'))return;const link=document.createElement('a');link.href='precos.html';link.className='btn btn-gold';link.textContent='Preços';link.setAttribute('aria-label','Ver preços da EuroCompra');const cadastro=Array.from(nav.querySelectorAll('a')).find(item=>item.textContent.trim().toLowerCase()==='cadastro');if(cadastro)nav.insertBefore(link,cadastro);else nav.appendChild(link);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',adicionarBotaoPrecos);else adicionarBotaoPrecos();})();
 
-    const link = document.createElement('a');
-    link.href = 'precos.html';
-    link.className = 'btn btn-gold';
-    link.textContent = 'Preços';
-    link.setAttribute('aria-label', 'Ver preços da EuroCompra');
-
-    const cadastro = Array.from(nav.querySelectorAll('a')).find(function (item) {
-      return item.textContent.trim().toLowerCase() === 'cadastro';
-    });
-
-    if (cadastro) nav.insertBefore(link, cadastro);
-    else nav.appendChild(link);
+// EuroCompra — liga o botão de acesso por código à área completa do cliente.
+(function(){
+  function ligar(){
+    const btn=document.getElementById('accessCodigoOnly');
+    if(!btn||btn.dataset.areaClienteLigada==='1')return;
+    btn.dataset.areaClienteLigada='1';
+    const codigoInput=document.getElementById('accessCodigo');
+    const original=btn.onclick;
+    btn.onclick=async function(){
+      const codigo=codigoInput?codigoInput.value.trim().toUpperCase():'';
+      if(!codigo){if(typeof original==='function')return original.call(btn);return;}
+      btn.disabled=true;btn.textContent='Consultando...';
+      try{
+        const r=await fetch('https://eurocompra-api.eurocompra2.workers.dev/api/acesso/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});
+        const d=await r.json().catch(()=>({}));
+        if(!r.ok||!d.ok)throw new Error(d.message||'Código não encontrado.');
+        sessionStorage.setItem('eurocompra_cliente_codigo',codigo);
+        window.location.href='cliente.html?codigo='+encodeURIComponent(codigo);
+      }catch(e){
+        btn.disabled=false;btn.textContent='🔐 Acessar meu cadastro';
+        if(typeof original==='function')return original.call(btn);
+      }
+    };
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', adicionarBotaoPrecos);
-  } else {
-    adicionarBotaoPrecos();
-  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ligar);else ligar();
 })();
