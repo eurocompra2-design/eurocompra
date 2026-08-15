@@ -8,40 +8,31 @@
     ['LEGO','Brinquedos','https://www.lego.com/en-be/'],['DreamLand','Brinquedos','https://www.dreamland.be/'],
     ['Decathlon','Esportes','https://www.decathlon.be/'],['Nike','Esportes','https://www.nike.com/be/'],['Adidas','Esportes','https://www.adidas.be/'],['JD Sports','Esportes','https://www.jdsports.be/'],['INTERSPORT','Esportes','https://www.intersport.be/'],['Sports Direct','Esportes','https://be.sportsdirect.com/'],['A.S.Adventure','Esportes','https://www.asadventure.com/'],['Courir','Esportes','https://www.courir.com/be/'],['Puma','Esportes','https://eu.puma.com/be/en/'],['Under Armour','Esportes','https://www.underarmour.be/'],['New Balance','Esportes','https://www.newbalance.be/'],['Asics','Esportes','https://www.asics.com/be/en-be/'],
     ['IKEA','Casa','https://www.ikea.com/be/en/'],['Action','Casa','https://www.action.com/en-be/'],['JYSK','Casa','https://jysk.be/'],['CASA','Casa','https://www.casashops.com/en-be/'],['Maisons du Monde','Casa','https://www.maisonsdumonde.com/BE/en/'],
-    ['Standaard Boekhandel','Livros','https://www.standaardboekhandel.be/'],['Tom&Co','Animais','https://www.tomandco.com/'],['Maxi Zoo','Animais','https://www.maxizoo.be/'],
-    ['Leonidas','Chocolates','https://www.leonidas.com/be_en'],['Neuhaus','Chocolates','https://www.neuhauschocolates.com/be_en/'],['Pierre Marcolini','Chocolates','https://eu.marcolini.com/'],['Galler','Chocolates','https://www.galler.com/'],['Chocolaterie Mary','Chocolates','https://www.mary.be/'],['Wittamer','Chocolates','https://wittamer.com/']
+    ['Standaard Boekhandel','Livros','https://www.standaardboekhandel.be/'],['Tom&Co','Animais','https://www.tomandco.com/'],['Maxi Zoo','Animais','https://www.maxizoo.be/']
   ];
   const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const esc=v=>String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const css=`
     .ec-store-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
-    .ec-store-card{min-height:125px!important;background:#fff!important;border:2.5px solid #000!important;border-radius:17px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:12px!important;text-decoration:none!important;color:#000!important;box-shadow:none!important;transition:transform .15s,box-shadow .15s!important}
-    .ec-store-card:hover{transform:translateY(-2px)!important;box-shadow:0 7px 18px rgba(0,0,0,.12)!important}
-    .ec-store-name{font-family:Arial,sans-serif!important;font-size:18px!important;font-weight:900!important;line-height:1.05!important;letter-spacing:-.4px!important}
-    .ec-store-cat{display:block!important;font-family:Arial,sans-serif!important;font-size:9px!important;font-weight:700!important;letter-spacing:.8px!important;text-transform:uppercase!important;margin-top:7px!important;opacity:.5!important}
+    .ec-store-card{min-height:125px!important;background:#fff!important;border:2px solid #063b9e!important;border-radius:17px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:12px!important;text-decoration:none!important;color:#06245c!important;box-shadow:0 8px 24px rgba(6,59,158,.07)!important;transition:transform .15s,box-shadow .15s,background .15s!important}
+    .ec-store-card:hover{transform:translateY(-2px)!important;box-shadow:0 10px 25px rgba(6,59,158,.14)!important;background:#f7faff!important}
+    .ec-store-name{font-family:Arial,sans-serif!important;font-size:18px!important;font-weight:900!important;line-height:1.05!important;letter-spacing:-.4px!important;color:#063b9e!important}
+    .ec-store-cat{display:block!important;font-family:Arial,sans-serif!important;font-size:9px!important;font-weight:700!important;letter-spacing:.8px!important;text-transform:uppercase!important;margin-top:7px!important;color:#667085!important}
     .ec-store-search{display:flex!important;gap:8px!important;margin:0 auto 15px!important}
-    .ec-store-search input{flex:1!important;min-width:0!important;background:#fff!important;color:#000!important;border:2.5px solid #000!important;border-radius:17px!important;padding:14px!important;font-family:Georgia,serif!important}
-    .ec-store-search button{background:#000!important;color:#fff!important;border:2px solid #000!important;border-radius:17px!important;padding:12px 16px!important;font-weight:800!important;white-space:nowrap!important}
-    @media(max-width:700px){.ec-store-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}.ec-store-card{min-height:92px!important;padding:6px!important;border-width:2.3px!important}.ec-store-name{font-size:11px!important;letter-spacing:-.2px!important}.ec-store-cat{font-size:6px!important;margin-top:4px!important}.ec-store-search button{padding:10px 12px!important;font-size:12px!important}}
+    .ec-store-search input{flex:1!important;min-width:0!important;background:#fff!important;color:#172033!important;border:2px solid #063b9e!important;border-radius:13px!important;padding:14px!important;font-family:Arial,sans-serif!important}
+    .ec-store-search button{background:#063b9e!important;color:#fff!important;border:2px solid #063b9e!important;border-radius:13px!important;padding:12px 16px!important;font-weight:800!important;white-space:nowrap!important}
+    @media(max-width:700px){.ec-store-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}.ec-store-card{min-height:92px!important;padding:6px!important}.ec-store-name{font-size:11px!important}.ec-store-cat{font-size:6px!important;margin-top:4px!important}.ec-store-search button{padding:10px 12px!important;font-size:12px!important}}
   `;
   function style(){if(document.getElementById('ec-store-grid-style'))return;const s=document.createElement('style');s.id='ec-store-grid-style';s.textContent=css;document.head.appendChild(s)}
   function build(){
-    const box=document.querySelector('.lojas-categorias'), input=document.getElementById('busca-lojas');
+    const box=document.querySelector('.lojas-categorias'),input=document.getElementById('busca-lojas');
     if(!box||!input)return;
     style();
     if(box.dataset.ecGrid==='1')return;
-    box.dataset.ecGrid='1';
-    box.innerHTML='';
-    box.classList.add('ec-store-grid');
-    lojas.forEach(function(item){
-      const a=document.createElement('a');a.className='ec-store-card';a.href=item[2];a.target='_blank';a.rel='noopener noreferrer';a.dataset.nome=norm(item[0]);a.dataset.cat=norm(item[1]);
-      a.innerHTML='<div><div class="ec-store-name">'+esc(item[0])+'</div><span class="ec-store-cat">'+esc(item[1])+'</span></div>';
-      box.appendChild(a);
-    });
-    const wrap=input.parentElement;
-    wrap.className='ec-store-search';
-    const btn=document.createElement('button');btn.type='button';btn.textContent='🔎 Buscar';wrap.appendChild(btn);
-    function filtrar(){const q=norm(input.value);box.querySelectorAll('.ec-store-card').forEach(function(c){c.style.display=!q||c.dataset.nome.includes(q)||c.dataset.cat.includes(q)?'flex':'none'});}
+    box.dataset.ecGrid='1';box.innerHTML='';box.classList.add('ec-store-grid');
+    lojas.forEach(function(item){const a=document.createElement('a');a.className='ec-store-card';a.href=item[2];a.target='_blank';a.rel='noopener noreferrer';a.dataset.nome=norm(item[0]);a.dataset.cat=norm(item[1]);a.innerHTML='<div><div class="ec-store-name">'+esc(item[0])+'</div><span class="ec-store-cat">'+esc(item[1])+'</span></div>';box.appendChild(a);});
+    const wrap=input.parentElement;wrap.className='ec-store-search';const btn=document.createElement('button');btn.type='button';btn.textContent='🔎 Buscar';wrap.appendChild(btn);
+    function filtrar(){const q=norm(input.value);box.querySelectorAll('.ec-store-card').forEach(c=>c.style.display=!q||c.dataset.nome.includes(q)||c.dataset.cat.includes(q)?'flex':'none');}
     input.addEventListener('input',filtrar);input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();filtrar()}});btn.addEventListener('click',filtrar);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
