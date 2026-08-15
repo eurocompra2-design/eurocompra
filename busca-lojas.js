@@ -15,6 +15,29 @@
     const input=document.getElementById('busca-lojas');
     const box=document.querySelector('.lojas-categorias');
     if(!input||!box)return;
+
+    const searchWrap=input.parentElement;
+    if(searchWrap && !document.getElementById('buscarLojasBtn')){
+      searchWrap.style.display='flex';
+      searchWrap.style.gap='10px';
+      searchWrap.style.alignItems='stretch';
+      input.style.flex='1';
+      input.style.minWidth='0';
+
+      const btn=document.createElement('button');
+      btn.id='buscarLojasBtn';
+      btn.type='button';
+      btn.className='btn primary';
+      btn.textContent='🔎 Buscar lojas';
+      btn.style.whiteSpace='nowrap';
+      btn.style.padding='13px 18px';
+      searchWrap.appendChild(btn);
+
+      const mobileStyle=document.createElement('style');
+      mobileStyle.textContent='@media(max-width:600px){#buscarLojasBtn{width:100%}.lojas-search{display:flex!important;flex-direction:column!important}}';
+      document.head.appendChild(mobileStyle);
+    }
+
     let resultados=document.getElementById('lojasResultados');
     if(!resultados){
       resultados=document.createElement('div');
@@ -22,21 +45,36 @@
       resultados.style.cssText='display:none;grid-column:1/-1;background:#fff;border:1px solid #e2e7f0;border-radius:15px;padding:18px;margin-top:0';
       box.appendChild(resultados);
     }
+
     function buscar(){
       const q=norm(input.value);
       const cards=box.querySelectorAll('.loja-card');
-      if(!q){resultados.style.display='none';cards.forEach(c=>c.style.display='');return;}
+      if(!q){
+        resultados.style.display='none';
+        cards.forEach(c=>c.style.display='');
+        return;
+      }
       const found=[];
       Object.entries(lojas).forEach(([cat,itens])=>Object.entries(itens).forEach(([nome,url])=>{
         if(norm(nome).includes(q)||norm(cat).includes(q))found.push({cat,nome,url});
       }));
       cards.forEach(c=>c.style.display='none');
       resultados.style.display='block';
-      if(!found.length){resultados.innerHTML='<strong>Nenhuma loja encontrada.</strong><p style="color:#667085;margin:6px 0 0">Tente o nome da loja ou categoria.</p>';return;}
+      if(!found.length){
+        resultados.innerHTML='<strong>❌ Nenhuma loja encontrada.</strong><p style="color:#667085;margin:6px 0 0">Tente o nome da loja ou categoria.</p>';
+        return;
+      }
       resultados.innerHTML='<strong>🔎 Lojas encontradas</strong>'+found.map(x=>'<a href="'+x.url+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:11px 0;border-bottom:1px solid #e2e7f0;color:#063b9e;font-weight:700">'+x.nome+' <span style="font-weight:400;color:#667085">· '+x.cat+'</span> ↗</a>').join('');
     }
+
+    document.getElementById('buscarLojasBtn')?.addEventListener('click',buscar);
     input.addEventListener('input',buscar);
-    input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();buscar();}});
+    input.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){
+        e.preventDefault();
+        buscar();
+      }
+    });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
