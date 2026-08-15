@@ -4,69 +4,64 @@
     const style=document.createElement('style');
     style.id='eurocompra-beacons-style';
     style.textContent=`
-      :root{--azul:#111;--escuro:#111;--claro:#f5eee7;--dourado:#e8dacb;--cinza:#f7f2ed;--texto:#111;--muted:#333;--borda:#111}
-      html{background:#f7f2ed}
-      body{background:#f7f2ed!important;color:#111!important;font-family:Georgia,'Times New Roman',serif!important;line-height:1.45!important}
-      a{color:inherit}
-      header{position:sticky;top:0;z-index:20;background:rgba(247,242,237,.97)!important;border-bottom:2px solid #111!important;box-shadow:none!important}
-      .container{width:min(1120px,92%);margin:auto}
-      .nav{min-height:78px!important;gap:10px!important}
-      .logo{font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:900!important;color:#111!important;letter-spacing:-.5px}
-      .logo-icon{width:44px!important;height:44px!important;border-radius:50%!important;background:#111!important;color:#fff!important;margin-right:9px!important}
-      .navlinks{gap:20px!important}
-      .navlinks a{font-family:Arial,sans-serif!important;font-size:14px!important;font-weight:800!important;color:#111!important}
-      .btn{font-family:Arial,sans-serif!important;border:2px solid #111!important;border-radius:14px!important;padding:12px 18px!important;box-shadow:none!important}
-      .primary{background:#111!important;color:#fff!important}
-      .gold{background:#e8dacb!important;color:#111!important}
-      section{padding:58px 0!important}
-      .hero{background:#f7f2ed!important}
-      .hero-grid{grid-template-columns:1fr!important;max-width:900px}
-      .badge{background:#e8dacb!important;color:#111!important;border:2px solid #111!important;border-radius:999px!important;font-family:Arial,sans-serif!important;font-weight:800!important}
-      h1,.section-title h2,.form-header h2,.access-heading h2,.access-content h3{font-family:Georgia,'Times New Roman',serif!important;color:#111!important}
-      h1{font-size:clamp(42px,8vw,68px)!important;line-height:1.02!important}
-      .hero p,.section-title p,.card p,.loja-card p,.access-heading p,.access-content p,.form-header p,.help{color:#333!important}
-      .hero-card,.form-box,.card,.loja-card,.access-card,.valores-panel{background:#eaded2!important;border:2px solid #111!important;border-radius:16px!important;box-shadow:none!important}
-      .mini-icon,.access-icon{background:#f7f2ed!important;border:2px solid #111!important;border-radius:12px!important}
-      .services,.form-section{background:#f7f2ed!important}
-      .section-title{text-align:left;max-width:900px;margin:0 auto 28px!important}
-      .section-title h2{font-size:36px!important}
-      .cards{grid-template-columns:1fr!important;gap:16px!important}
-      .card{padding:22px!important}
-      .lojas-search{max-width:900px!important;margin:0 auto 22px!important}
-      .lojas-search input{background:#fff!important;border:2px solid #111!important;border-radius:14px!important;color:#111!important;font-family:Georgia,'Times New Roman',serif!important;padding:15px 16px!important}
-      .lojas-categorias{grid-template-columns:repeat(2,1fr)!important;gap:12px!important}
-      .lojas-categorias .loja-card{min-height:125px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;background:#fff!important;border:3px solid #111!important;border-radius:16px!important;padding:22px!important;box-shadow:none!important}
-      .lojas-categorias .loja-card h3{font-family:Georgia,'Times New Roman',serif!important;font-size:25px!important;margin:0 0 6px!important;color:#111!important}
-      .lojas-categorias .loja-card p{font-family:Georgia,'Times New Roman',serif!important;font-size:16px!important;margin:0!important}
-      .lojas-lista-aberta{background:#eaded2!important;border:2px solid #111!important;border-radius:16px!important;padding:12px!important;box-shadow:none!important}
-      .lojas-lista-aberta a{font-family:Georgia,'Times New Roman',serif!important;color:#111!important;border-bottom:2px solid #111!important;padding:15px 12px!important;font-size:18px!important}
-      .lojas-lista-aberta a:last-child{border-bottom:0!important}
-      .number{background:#111!important;color:#fff!important;border-radius:50%!important}
-      input,select,textarea{background:#fff!important;border:2px solid #111!important;border-radius:12px!important;color:#111!important}
-      label{font-family:Arial,sans-serif!important;color:#111!important}
-      .upload{background:#fff!important;border:2px dashed #111!important}
-      .access-options{gap:16px!important}
-      .access-card{box-shadow:none!important}
-      .access-button{border:2px solid #111!important;border-radius:12px!important;font-family:Arial,sans-serif!important}
-      .access-primary{background:#111!important;color:#fff!important}
-      .access-gold{background:#e8dacb!important;color:#111!important}
-      footer{background:#111!important;color:#fff!important;border-top:3px solid #111!important}
-      .social-links a{background:#eaded2!important;color:#111!important;border:2px solid #111!important}
-      @media(max-width:700px){
-        .nav{min-height:68px!important}
-        .logo{font-size:21px!important}
-        .logo-icon{width:40px!important;height:40px!important}
-        .nav>.gold,.nav>.primary{padding:9px 11px!important;font-size:12px!important}
-        .lojas-categorias{grid-template-columns:1fr 1fr!important;gap:9px!important}
-        .lojas-categorias .loja-card{min-height:115px!important;padding:15px!important}
-        .lojas-categorias .loja-card h3{font-size:21px!important}
-        .lojas-categorias .loja-card p{font-size:14px!important}
-      }
-      @media(max-width:420px){
-        .lojas-categorias{grid-template-columns:1fr 1fr!important}
-        .lojas-categorias .loja-card{min-height:105px!important}
-      }
-    `;
+:root{--ec-bg:#f7f0ea;--ec-card:#eadccf;--ec-white:#fffdf9;--ec-black:#080808}
+html,body{background:var(--ec-bg)!important;color:var(--ec-black)!important;font-family:Georgia,'Times New Roman',serif!important}
+body{line-height:1.45!important;overflow-x:hidden!important}
+header{position:relative!important;top:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:20px 0 5px!important}
+.container{width:min(760px,92%)!important;margin:auto!important}
+.nav{min-height:48px!important;justify-content:center!important;gap:0!important}
+.logo{font-family:Arial,sans-serif!important;font-size:28px!important;font-weight:900!important;color:#000!important;letter-spacing:-1px!important}
+.logo-icon{width:43px!important;height:43px!important;border-radius:50%!important;background:#000!important;color:#fff!important;margin-right:8px!important}
+.navlinks,.header-precos,.nav>.primary{display:none!important}
+section{padding:26px 0!important;background:transparent!important}
+.hero{padding:25px 0 12px!important;background:transparent!important}
+.hero-grid{display:block!important;max-width:760px!important}
+.hero-grid>div:first-child{text-align:center!important}
+.hero-card{display:none!important}
+.badge{background:transparent!important;color:#000!important;border:0!important;border-radius:0!important;font-size:17px!important;font-weight:400!important;padding:0!important;margin:0 0 8px!important}
+h1{font-family:Georgia,'Times New Roman',serif!important;color:#000!important;font-size:clamp(36px,8vw,54px)!important;line-height:1.03!important;margin:0 0 12px!important}
+.hero p{color:#000!important;font-size:17px!important;max-width:650px!important;margin:0 auto 18px!important}
+.hero-buttons{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;max-width:680px!important;margin:auto!important}
+.btn{font-family:Georgia,serif!important;background:var(--ec-card)!important;color:#000!important;border:2.5px solid #000!important;border-radius:17px!important;padding:15px 18px!important;box-shadow:none!important;font-size:17px!important}
+.primary,.gold{background:var(--ec-card)!important;color:#000!important}
+.section-title{text-align:center!important;max-width:700px!important;margin:0 auto 20px!important}
+.section-title h2{font-family:Georgia,serif!important;color:#000!important;font-size:31px!important;margin:0 0 5px!important}
+.section-title p{color:#000!important;font-size:16px!important;margin:0!important}
+.cards,.steps{display:grid!important;grid-template-columns:1fr!important;gap:13px!important}
+.card,.step{background:var(--ec-card)!important;border:2.5px solid #000!important;border-radius:17px!important;box-shadow:none!important;padding:20px!important;text-align:left!important}
+.card h3,.step h3{font-family:Georgia,serif!important;color:#000!important;font-size:23px!important;margin:0 0 4px!important}
+.card p,.step p{color:#000!important;font-size:16px!important;margin:0!important}
+.number{background:#000!important;color:#fff!important;width:48px!important;height:48px!important;margin:0 0 11px!important}
+.lojas-search{max-width:100%!important;margin:0 auto 14px!important}
+.lojas-search input{background:var(--ec-white)!important;color:#000!important;border:2.5px solid #000!important;border-radius:17px!important;padding:14px!important;font-family:Georgia,serif!important}
+.lojas-categorias{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important}
+.lojas-categorias .loja-card{background:var(--ec-white)!important;color:#000!important;border:2.5px solid #000!important;border-radius:17px!important;box-shadow:none!important;min-height:125px!important;padding:9px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+.lojas-categorias .loja-card h3{font-family:Arial,sans-serif!important;color:#000!important;font-size:16px!important;font-weight:800!important;line-height:1.05!important;margin:0!important}
+.lojas-categorias .loja-card p{display:none!important}
+.lojas-categorias .loja-card>div:first-child{font-size:28px!important;margin:0 0 7px!important}
+.lojas-lista-aberta{background:var(--ec-card)!important;border:2.5px solid #000!important;border-radius:17px!important;box-shadow:none!important;padding:13px!important;color:#000!important}
+.lojas-lista-aberta a{display:block!important;color:#000!important;font-family:Georgia,serif!important;font-size:17px!important;border-bottom:1.5px solid #000!important;padding:11px 4px!important}
+.form-section{background:transparent!important}
+.form-box,.access-card,.valores-panel{background:var(--ec-card)!important;border:2.5px solid #000!important;border-radius:17px!important;box-shadow:none!important}
+.form-box{padding:21px!important}
+.form-header h2,.access-heading h2,.access-content h3{font-family:Georgia,serif!important;color:#000!important}
+.form-header p,.access-heading p,.access-content p,.help{font-family:Georgia,serif!important;color:#000!important}
+.access-options{grid-template-columns:1fr!important;gap:13px!important}
+.access-card{padding:19px!important}
+.access-icon{background:#000!important;color:#fff!important;border-radius:14px!important}
+.access-label{color:#000!important;font-family:Arial,sans-serif!important}
+.access-button{border:2px solid #000!important;border-radius:14px!important;background:var(--ec-white)!important;color:#000!important;font-family:Georgia,serif!important}
+.access-primary,.access-gold{background:var(--ec-white)!important;color:#000!important}
+.access-security{color:#000!important}
+input,select,textarea{background:var(--ec-white)!important;color:#000!important;border:2px solid #000!important;border-radius:13px!important;font-family:Georgia,serif!important}
+label{font-family:Georgia,serif!important;color:#000!important}
+.upload{background:var(--ec-white)!important;border:2px dashed #000!important;border-radius:14px!important}
+footer{background:transparent!important;color:#000!important;border:0!important;padding:30px 0 60px!important}
+.footer-grid{grid-template-columns:1fr!important;text-align:center!important}
+.social-links{justify-content:center!important}
+.social-links a{background:var(--ec-card)!important;color:#000!important;border:2px solid #000!important;border-radius:14px!important;font-family:Georgia,serif!important}
+@media(max-width:520px){.container{width:calc(100% - 30px)!important}.lojas-categorias{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}.lojas-categorias .loja-card{min-height:92px!important;padding:6px!important;border-width:2.3px!important}.lojas-categorias .loja-card h3{font-size:11px!important}.lojas-categorias .loja-card>div:first-child{font-size:21px!important;margin-bottom:4px!important}.hero{padding-top:15px!important}section{padding:22px 0!important}}
+`;
     document.head.appendChild(style);
   }
 
@@ -74,7 +69,6 @@
     aplicarVisual();
     const box=document.querySelector('.lojas-categorias');
     if(!box || box.querySelector('[data-chocolates-card="1"]')) return;
-
     const card=document.createElement('div');
     card.className='loja-card';
     card.dataset.chocolatesCard='1';
@@ -83,7 +77,6 @@
     card.setAttribute('aria-expanded','false');
     card.innerHTML='<div style="font-size:30px;margin-bottom:8px">🍫</div><h3>Chocolates</h3><p>Somente lojas de chocolate na Bélgica.</p>';
     box.appendChild(card);
-
     const lojas=[
       ['Leonidas','https://www.leonidas.com/be_en'],
       ['Neuhaus','https://www.neuhauschocolates.com/be_en/'],
@@ -91,32 +84,17 @@
       ['Galler','https://www.galler.com/'],
       ['Chocolaterie Mary','https://www.mary.be/']
     ];
-
     function abrirLojas(){
       let lista=box.querySelector('[data-chocolates-lista="1"]');
-      if(lista){
-        lista.remove();
-        card.setAttribute('aria-expanded','false');
-        return;
-      }
+      if(lista){lista.remove();card.setAttribute('aria-expanded','false');return;}
       lista=document.createElement('div');
       lista.className='lojas-lista-aberta ativa';
       lista.dataset.chocolatesLista='1';
-      lista.innerHTML=lojas.map(function(item){
-        return '<a href="'+item[1]+'" target="_blank" rel="noopener noreferrer">'+item[0]+'</a>';
-      }).join('');
-      box.appendChild(lista);
-      card.setAttribute('aria-expanded','true');
+      lista.innerHTML=lojas.map(function(item){return '<a href="'+item[1]+'" target="_blank" rel="noopener noreferrer">'+item[0]+'</a>';}).join('');
+      box.appendChild(lista);card.setAttribute('aria-expanded','true');
     }
-
     card.addEventListener('click',abrirLojas);
-    card.addEventListener('keydown',function(e){
-      if(e.key==='Enter' || e.key===' '){
-        e.preventDefault();
-        abrirLojas();
-      }
-    });
+    card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();abrirLojas();}});
   }
-
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
 })();
