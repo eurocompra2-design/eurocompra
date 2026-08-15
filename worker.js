@@ -254,7 +254,27 @@ export default {
       } catch(erro) { console.error("Erro no acesso:",erro); return json({ok:false,message:"Não foi possível entrar."},500); }
     }
 
-    if (request.method === "GET" && url.pathname === "/api/clientes") {
+    
+    if (request.method === "POST" && url.pathname === "/api/acesso/codigo") {
+      try {
+        const body = await request.json();
+        const codigo = clean(body.codigo).toUpperCase();
+        if (!codigoValido(codigo)) return json({ok:false,message:"Código de cliente inválido."},400);
+        const cliente = await env.DB.prepare("SELECT codigo,nome,email,whatsapp,servico,produto,status,criado_em,atualizado_em FROM clientes WHERE codigo = ?").bind(codigo).first();
+        if (!cliente) return json({ok:false,message:"Código de cliente não encontrado."},404);
+        let pedidos = [];
+        try {
+          const r = await env.DB.prepare("SELECT * FROM pedidos WHERE codigo_cliente = ? OR cliente_codigo = ? ORDER BY id DESC LIMIT 100").bind(codigo,codigo).all();
+          pedidos = r.results || [];
+        } catch (_) {}
+        return json({ok:true,cliente,pedidos,message:"Acesso autorizado."});
+      } catch (erro) {
+        console.error("Erro no acesso por código:",erro);
+        return json({ok:false,message:"Não foi possível acessar o cadastro."},500);
+      }
+    }
+
+if (request.method === "GET" && url.pathname === "/api/clientes") {
       const adminToken = request.headers.get("X-Admin-Token");
       if (!env.ADMIN_VIEW_TOKEN || adminToken !== env.ADMIN_VIEW_TOKEN) {
         return json({ ok: false, message: "Não autorizado." }, 401);

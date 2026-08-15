@@ -143,4 +143,44 @@ const lojas={Moda:['Zara','H&M','C&A','Primark','Mango','Uniqlo'],Eletrônicos:[
 </script>
 
 <script id="eurocompra-acesso-script">(()=>{const API='https://eurocompra-api.eurocompra2.workers.dev',sec=document.getElementById('acessoCliente'),formSec=document.getElementById('cadastro'),msg=document.getElementById('accessMessage'),login=document.getElementById('accessLogin'),create=document.getElementById('accessCreate'),area=document.getElementById('accessArea');const showMsg=(t,ok=false)=>{msg.textContent=t;msg.style.display='block';msg.style.background=ok?'#eaf8f0':'#fff4e5';msg.style.color=ok?'#16804b':'#9a5b00'};const entrada=document.getElementById('entradaEuroCompra');const showChoice=()=>{if(entrada)entrada.style.display='block';if(formSec)formSec.style.display='none';if(sec)sec.style.display='none';entrada?.scrollIntoView({behavior:'smooth',block:'start'})};const showRegister=()=>{if(entrada)entrada.style.display='none';if(sec)sec.style.display='none';if(formSec)formSec.style.display='block';formSec?.scrollIntoView({behavior:'smooth',block:'start'})};const showAccess=()=>{if(entrada)entrada.style.display='none';if(formSec)formSec.style.display='none';if(sec)sec.style.display='block';sec.scrollIntoView({behavior:'smooth',block:'start'})};document.querySelectorAll('a[href="#cadastro"]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showChoice()}));document.getElementById('novoCadastroBtn')?.addEventListener('click',showRegister);document.getElementById('acessoClienteBtn')?.addEventListener('click',showAccess);if(location.hash==='#cadastro')setTimeout(showChoice,0);else setTimeout(showChoice,0);document.getElementById('accessCriar')?.addEventListener('click',()=>{login.style.display='none';create.style.display='block';showMsg('Informe seu código recebido após o cadastro e crie sua senha.')});document.getElementById('accessVoltar')?.addEventListener('click',()=>{create.style.display='none';login.style.display='block';msg.style.display='none'});document.getElementById('accessSalvar')?.addEventListener('click',async()=>{const codigo=document.getElementById('accessCodigo').value.trim().toUpperCase(),senha=document.getElementById('newSenha').value,senha2=document.getElementById('newSenha2').value;if(senha!==senha2)return showMsg('As senhas não conferem.');const r=await fetch(API+'/api/acesso/criar-senha',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo,senha})}),d=await r.json();if(!d.ok)return showMsg(d.message||'Não foi possível criar a senha.');showMsg('Senha criada. Agora você já pode entrar no seu cadastro.',true);create.style.display='none';login.style.display='block'});document.getElementById('accessEntrar')?.addEventListener('click',async()=>{const codigo=document.getElementById('accessCodigo').value.trim().toUpperCase(),senha=document.getElementById('accessSenha').value;const r=await fetch(API+'/api/acesso/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo,senha})}),d=await r.json();if(!d.ok)return showMsg(d.message||'Código ou senha incorretos.');login.style.display='none';create.style.display='none';area.style.display='block';area.innerHTML='<h3>Olá, '+String(d.cliente.nome).replace(/[<>]/g,'')+' 👋</h3><p>Seu cadastro está protegido. Código: <strong>'+d.cliente.codigo+'</strong></p><p>Status: <strong>'+d.cliente.status+'</strong></p><p>Você já pode continuar o atendimento pelo EuroCompra.</p>';showMsg('Acesso autorizado com sucesso.',true)})})();</script>
-<script id="eurocompra-valores-script">document.getElementById('valores-servicos')?.addEventListener('click',function(){document.getElementById('valoresPanel')?.classList.toggle('ativo')});</script></body></html>
+<script id="eurocompra-valores-script">document.getElementById('valores-servicos')?.addEventListener('click',function(){document.getElementById('valoresPanel')?.classList.toggle('ativo')});</script><style id="eurocompra-acesso-codigo-only-style">
+#acessoCliente #accessSenha,#acessoCliente label[for="accessSenha"],#acessoCliente #accessEntrar,#acessoCliente #accessCriar,#acessoCliente #accessCreate{display:none!important}
+#accessCodigoOnly{margin-top:18px;width:100%}
+#accessClienteArea{margin-top:22px;padding:20px;border:1px solid #e2e7f0;border-radius:16px;background:#f7f9fc}
+#accessClienteArea h3{margin-top:0;color:#06245c}
+.access-pedido{padding:12px;margin-top:10px;border-radius:10px;background:#fff;border:1px solid #e2e7f0}
+</style>
+<script id="eurocompra-acesso-codigo-only">(()=>{
+const API='https://eurocompra-api.eurocompra2.workers.dev';
+function init(){
+ const sec=document.getElementById('acessoCliente');
+ const code=document.getElementById('accessCodigo');
+ if(!sec||!code||document.getElementById('accessCodigoOnly')) return;
+ const oldMsg=document.getElementById('accessMessage');
+ const btn=document.createElement('button');
+ btn.id='accessCodigoOnly'; btn.type='button'; btn.className='btn primary'; btn.textContent='🔐 Acessar meu cadastro';
+ const area=document.createElement('div'); area.id='accessClienteArea'; area.style.display='none';
+ const login=document.getElementById('accessLogin');
+ if(login) login.appendChild(btn); else sec.appendChild(btn);
+ const p=sec.querySelector('.form-header p'); if(p) p.textContent='Digite somente o código do cliente para acessar seu cadastro e acompanhar seus pedidos.';
+ sec.appendChild(area);
+ const msg=(t,ok=false)=>{if(oldMsg){oldMsg.textContent=t;oldMsg.style.display='block';oldMsg.style.background=ok?'#eaf8f0':'#fff4e5';oldMsg.style.color=ok?'#16804b':'#9a5b00'}};
+ btn.onclick=async()=>{
+   const codigo=code.value.trim().toUpperCase();
+   if(!/^EC-\d{8}-[A-Z0-9]{6}$/.test(codigo)){msg('Informe um código de cliente válido.');return;}
+   btn.disabled=true; btn.textContent='Consultando...';
+   try{
+     const r=await fetch(API+'/api/acesso/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});
+     const d=await r.json();
+     if(!r.ok||!d.ok) throw new Error(d.message||'Código não encontrado.');
+     const c=d.cliente||{}; const pedidos=Array.isArray(d.pedidos)?d.pedidos:[];
+     area.style.display='block';
+     area.innerHTML='<h3>Olá, '+String(c.nome||'Cliente').replace(/[<>]/g,'')+' 👋</h3><p><strong>Código:</strong> '+String(c.codigo||codigo).replace(/[<>]/g,'')+'</p><p><strong>Status:</strong> '+String(c.status||'Cadastro ativo').replace(/[<>]/g,'')+'</p><h4>📦 Pedidos e compras</h4>'+ (pedidos.length?pedidos.map(p=>'<div class="access-pedido"><strong>'+String(p.numero||p.id||'Pedido').replace(/[<>]/g,'')+'</strong><br>'+String(p.status||'Em andamento').replace(/[<>]/g,'')+'</div>').join(''):'<p>Nenhum pedido registrado para este cliente.</p>');
+     msg('Acesso autorizado com sucesso.',true);
+   }catch(e){area.style.display='none';msg(e.message||'Não foi possível acessar o cadastro.');}
+   finally{btn.disabled=false;btn.textContent='🔐 Acessar meu cadastro';}
+ };
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();</script>
+</body></html>
