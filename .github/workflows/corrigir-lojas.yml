@@ -19,13 +19,13 @@ jobs:
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           s=s.replace('<script src="doces-lojas.js"></script>', '')
-          # Atualiza a versão do script para evitar cache do navegador/GitHub Pages.
           import re
           s=re.sub(r'<script src="categorias-profissionais\.js(?:\?[^\"]*)?"></script>', '<script src="categorias-profissionais.js?v=20260816"></script>', s)
           tags=[
             '<script src="busca-lojas.js"></script>',
             '<script src="chocolates-visivel.js"></script>',
-            '<script src="categorias-profissionais.js?v=20260816"></script>'
+            '<script src="categorias-profissionais.js?v=20260816"></script>',
+            '<script src="horario-whatsapp.js?v=20260816"></script>'
           ]
           for tag in tags:
               if tag not in s:
@@ -38,5 +38,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Atualizar script das lojas e limpar cache"
+          git commit -m "Adicionar horario profissional de atendimento WhatsApp"
           git push
