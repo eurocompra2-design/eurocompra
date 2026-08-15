@@ -65,18 +65,36 @@ footer{background:transparent!important;color:#000!important;border:0!important;
     document.head.appendChild(style);
   }
 
+  function limparDocesEDuplicados(){
+    const box=document.querySelector('.lojas-categorias');
+    if(!box) return;
+    box.querySelectorAll('.loja-card').forEach(function(card){
+      const titulo=(card.querySelector('h3')?.textContent||'').replace(/^[^A-Za-zÀ-ÿ]+/,'').trim().toLowerCase();
+      if(titulo==='doces') card.remove();
+    });
+    const chocolates=[...box.querySelectorAll('.loja-card')].filter(function(card){
+      const titulo=(card.querySelector('h3')?.textContent||'').trim().toLowerCase();
+      return titulo==='chocolates';
+    });
+    chocolates.slice(1).forEach(function(card){card.remove();});
+  }
+
   function iniciar(){
     aplicarVisual();
     const box=document.querySelector('.lojas-categorias');
-    if(!box || box.querySelector('[data-chocolates-card="1"]')) return;
-    const card=document.createElement('div');
-    card.className='loja-card';
-    card.dataset.chocolatesCard='1';
-    card.setAttribute('role','button');
-    card.setAttribute('tabindex','0');
-    card.setAttribute('aria-expanded','false');
-    card.innerHTML='<div style="font-size:30px;margin-bottom:8px">🍫</div><h3>Chocolates</h3><p>Somente lojas de chocolate na Bélgica.</p>';
-    box.appendChild(card);
+    if(!box) return;
+    limparDocesEDuplicados();
+    let card=box.querySelector('[data-chocolates-card="1"]');
+    if(!card){
+      card=document.createElement('div');
+      card.className='loja-card';
+      card.dataset.chocolatesCard='1';
+      card.setAttribute('role','button');
+      card.setAttribute('tabindex','0');
+      card.setAttribute('aria-expanded','false');
+      card.innerHTML='<div style="font-size:30px;margin-bottom:8px">🍫</div><h3>Chocolates</h3><p>Somente lojas de chocolate na Bélgica.</p>';
+      box.appendChild(card);
+    }
     const lojas=[
       ['Leonidas','https://www.leonidas.com/be_en'],
       ['Neuhaus','https://www.neuhauschocolates.com/be_en/'],
@@ -91,10 +109,26 @@ footer{background:transparent!important;color:#000!important;border:0!important;
       lista.className='lojas-lista-aberta ativa';
       lista.dataset.chocolatesLista='1';
       lista.innerHTML=lojas.map(function(item){return '<a href="'+item[1]+'" target="_blank" rel="noopener noreferrer">'+item[0]+'</a>';}).join('');
-      box.appendChild(lista);card.setAttribute('aria-expanded','true');
+      box.appendChild(lista);
+      card.setAttribute('aria-expanded','true');
     }
-    card.addEventListener('click',abrirLojas);
-    card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();abrirLojas();}});
+    if(!card.dataset.chocolatesBound){
+      card.dataset.chocolatesBound='1';
+      card.addEventListener('click',abrirLojas);
+      card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();abrirLojas();}});
+    }
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
+
+  function observar(){
+    const observer=new MutationObserver(function(){
+      const box=document.querySelector('.lojas-categorias');
+      if(!box) return;
+      limparDocesEDuplicados();
+      iniciar();
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){iniciar();observar();});
+  else {iniciar();observar();}
 })();
