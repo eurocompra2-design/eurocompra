@@ -25,6 +25,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Corrigir busca das lojas
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("index.html")
+          s = p.read_text(encoding="utf-8")
+          marker = '</body>'
+          if 'id="eurocompra-store-search-fix"' not in s:
+              inject = r'''<style id="eurocompra-store-search-fix">
+          #resultadoBuscaLojas{max-width:760px;margin:14px auto 0;background:#fff;border:1px solid #e2e7f0;border-radius:15px;overflow:hidden;box-shadow:0 8px 25px rgba(6,59,158,.07)}
+          #resultadoBuscaLojas .loja-busca-titulo{padding:13px 16px;background:#f7f9fc;color:#06245c;font-weight:800}
+          #resultadoBuscaLojas a{display:flex;justify-content:space-between;gap:12px;padding:13px 16px;color:#063b9e;font-weight:700;text-decoration:none;border-top:1px solid #e2e7f0}
+          #resultadoBuscaLojas a:hover{background:#f5f8ff}
+          #resultadoBuscaLojas small{color:#667085;font-weight:600}
+          </style>
+          <script id="eurocompra-store-search-fix">
+          (function(){
+            const input=document.getElementById('busca-lojas');
+            if(!input || typeof lojas==='undefined') return;
+            const urlsLocal=typeof urls!=='undefined'?urls:{};
+            const normStore=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+            let box=document.getElementById('resultadoBuscaLojas');
+            if(!box){box=document.createElement('div');box.id='resultadoBuscaLojas';input.parentElement.appendChild(box)}
+            function linkFor(name){return urlsLocal[normStore(name)]||'#'}
+            function render(){
+              const q=normStore(input.value.trim());
+              const cards=[...document.querySelectorAll('.lojas-categorias .loja-card')];
+              if(!q){cards.forEach(c=>c.style.display='');box.innerHTML='';return}
+              const matches=[];
+              Object.entries(lojas).forEach(([categoria,names])=>{
+                const categoriaMatch=normStore(categoria).includes(q);
+                names.forEach(nome=>{
+                  if(categoriaMatch || normStore(nome).includes(q)) matches.push({nome,categoria});
+                });
+              });
+              cards.forEach(card=>{
+                const titulo=normStore((card.querySelector('h3')||{}).textContent||'');
+                const categoria=Object.keys(lojas).find(k=>titulo.includes(normStore(k)));
+                card.style.display=!categoria || matches.some(m=>m.categoria===categoria)?'':'none';
+              });
+              if(!matches.length){box.innerHTML='<div class="loja-busca-titulo">🔎 Nenhuma loja encontrada</div>';return}
+              box.innerHTML='<div class="loja-busca-titulo">Lojas encontradas</div>'+matches.map(m=>{
+                const u=linkFor(m.nome);
+                return '<a href="'+u+'" target="_blank" rel="noopener">'+m.nome+' <small>'+m.categoria+' ↗</small></a>';
+              }).join('');
+            }
+            input.addEventListener('input',render);
+            render();
+          })();
+          </script>'''
+              s = s.replace(marker, inject + '\n' + marker, 1)
+              p.write_text(s, encoding="utf-8")
+          PY
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
