@@ -1,7 +1,5 @@
 import originalWorker from "./worker.js";
 
-const WEBHOOK_VERIFY_TOKEN = "EUROCOMPRA_WEBHOOK";
-
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -24,8 +22,9 @@ export default {
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
+        const expectedToken = String(env.META_WEBHOOK_VERIFY_TOKEN || "").trim();
 
-        if (mode === "subscribe" && token === WEBHOOK_VERIFY_TOKEN && challenge) {
+        if (mode === "subscribe" && expectedToken && token === expectedToken && challenge) {
           return new Response(challenge, {
             status: 200,
             headers: { "Content-Type": "text/plain; charset=utf-8" },
