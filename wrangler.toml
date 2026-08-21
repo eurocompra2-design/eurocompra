@@ -1,5 +1,5 @@
 name = "eurocompra-api"
-main = "worker.js"
+main = "worker-webhook.js"
 compatibility_date = "2026-08-12"
 
 [[d1_databases]]
