@@ -27,6 +27,7 @@
 <div class="card"><div class="icon">💳</div><small class="muted">Pagamentos</small><strong id="qtdPagamentos">Consultar</strong></div>
 </div>
 <div class="box section"><h2>📋 Resumo do cliente</h2><div class="details" id="clienteDetalhes"></div></div>
+<div id="enderecoAprovado" class="box section" style="display:none;background:#eef6ff;border-color:#cfe3ff"><h2>✅ Cadastro aceito</h2><p class="muted">Seu cadastro foi aprovado. Este é o endereço da EuroCompra para você realizar suas compras:</p><div class="shipping"><strong id="enderecoNome"></strong><div id="enderecoTexto" style="white-space:pre-line;margin-top:8px"></div><button id="copiarEndereco" class="btn primary" style="margin-top:14px">📋 Copiar endereço</button><p class="muted" style="margin:12px 0 0">Use sempre o seu código EuroCompra como referência da compra.</p></div></div>
 <div class="box section"><h2>🛒 Minhas compras e pedidos</h2><div id="pedidos"></div></div>
 <div class="box section"><h2>🚚 Meus envios</h2><div id="envios"></div></div>
 <div class="box section"><h2>💳 Pagamentos</h2><div id="pagamentos"><div class="empty">Nenhum pagamento registrado no sistema até o momento.</div></div></div>
@@ -42,14 +43,14 @@ function valid(c){return /^EC-\d{8}-[A-Z0-9]{6}$/.test(c)}
 function showMsg(t,ok=false){const m=$('message');m.textContent=t;m.className='message '+(ok?'ok':'error');m.style.display='block'}
 function val(o,keys,def='—'){for(const k of keys)if(o&&o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!=='')return o[k];return def}
 function statusClass(s){return String(s||'').toLowerCase()}
-function renderCliente(c,pedidos){
+function renderEndereco(endereco,codigo){const box=$('enderecoAprovado');if(!endereco||!codigo){box.style.display='none';return}$('enderecoNome').textContent=endereco.nome||'EUROCOMPRA';$('enderecoTexto').textContent=(endereco.texto||'')+`\n\nReferência: ${codigo}`;box.style.display='block';$('copiarEndereco').onclick=async()=>{try{await navigator.clipboard.writeText((endereco.texto||'')+`\nReferência: ${codigo}`);showMsg('Endereço copiado com sucesso.',true)}catch(e){showMsg('Não foi possível copiar automaticamente.')}}}\nfunction renderCliente(c,pedidos,endereco){
  $('nome').textContent='Olá, '+(c.nome||'Cliente')+' 👋';$('codigoCliente').textContent=c.codigo||'';$('statusCliente').textContent=c.status||'Cadastro ativo';
  $('qtdCompras').textContent=pedidos.length;
  $('qtdEncomendas').textContent=pedidos.filter(p=>/receb|encom|pacote|pedido/i.test(JSON.stringify(p))).length;
  $('qtdEnvios').textContent=pedidos.filter(p=>/envio|enviado|rastre|transito|entreg/i.test(JSON.stringify(p))).length;
  const campos=[['E-mail',c.email],['WhatsApp',c.whatsapp],['Serviço',c.servico],['Produto',c.produto],['Cadastro',c.criado_em],['Última atualização',c.atualizado_em]];
  $('clienteDetalhes').innerHTML=campos.map(x=>'<div class="detail"><small>'+esc(x[0])+'</small><strong>'+esc(x[1]||'—')+'</strong></div>').join('');
- renderPedidos(pedidos);renderEnvios(pedidos);renderHistorico(c,pedidos);
+ renderPedidos(pedidos);renderEnvios(pedidos);renderHistorico(c,pedidos);renderEndereco(endereco,c.codigo);
 }
 function renderPedidos(items){
  if(!items.length){$('pedidos').innerHTML='<div class="empty">Nenhuma compra ou pedido registrado para este código.</div>';return}
@@ -60,7 +61,7 @@ function renderEnvios(items){
  $('envios').innerHTML=envios.map(p=>{const tracking=val(p,['rastreamento','tracking','codigo_rastreio','tracking_code'],'Ainda não informado');const transportadora=val(p,['transportadora','transportador'],'—');const status=val(p,['status','situacao'],'Em preparação');const destino=val(p,['destino','endereco_entrega'],'—');return '<div class="shipping" style="margin-top:12px"><div><strong>'+esc(status)+'</strong></div><div class="tracking">'+esc(tracking)+'</div><div class="muted">Transportadora: '+esc(transportadora)+' · Destino: '+esc(destino)+'</div></div>'}).join('')}
 function renderHistorico(c,pedidos){
  const eventos=[];if(c.criado_em)eventos.push(['Cadastro realizado',c.criado_em]);if(c.status)eventos.push(['Status atual: '+c.status,c.atualizado_em||'']);pedidos.forEach((p,i)=>{eventos.push(['Pedido '+val(p,['numero','numero_pedido','id'],'#'+(i+1))+': '+val(p,['status','situacao'],'Atualização'),val(p,['atualizado_em','data','criado_em'],'')])});$('historico').innerHTML=eventos.length?eventos.map(e=>'<div class="event"><span class="dot"></span><div><strong>'+esc(e[0])+'</strong><div class="muted">'+esc(e[1]||'')+'</div></div></div>').join(''):'<div class="empty">Nenhuma atualização registrada.</div>'}
-async function entrar(){const codigo=$('codigo').value.trim().toUpperCase();$('codigo').value=codigo;if(!valid(codigo)){showMsg('Informe um código válido no formato EC-XXXXXXXX-XXXXXX.');return}const b=$('entrar');b.disabled=true;b.textContent='Consultando...';$('message').style.display='none';try{const r=await fetch(API+'/api/acesso/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.message||'Código não encontrado.');renderCliente(d.cliente||{},Array.isArray(d.pedidos)?d.pedidos:[]);$('login').style.display='none';$('dashboard').style.display='block'}catch(e){showMsg(e.message||'Não foi possível acessar o cadastro.')}finally{b.disabled=false;b.textContent='Acessar meu cadastro →'}}
-$('entrar').onclick=entrar;$('codigo').addEventListener('keydown',e=>{if(e.key==='Enter')entrar()});$('sair').onclick=()=>{ $('dashboard').style.display='none';$('login').style.display='block';$('codigo').value='';$('message').style.display='none';window.scrollTo({top:0,behavior:'smooth'})};
+async function entrar(){const codigo=$('codigo').value.trim().toUpperCase();$('codigo').value=codigo;if(!valid(codigo)){showMsg('Informe um código válido no formato EC-XXXXXXXX-XXXXXX.');return}const b=$('entrar');b.disabled=true;b.textContent='Consultando...';$('message').style.display='none';try{const r=await fetch(API+'/api/acesso/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.message||'Código não encontrado.');renderCliente(d.cliente||{},Array.isArray(d.pedidos)?d.pedidos:[],d.endereco||null);$('login').style.display='none';$('dashboard').style.display='block'}catch(e){showMsg(e.message||'Não foi possível acessar o cadastro.')}finally{b.disabled=false;b.textContent='Acessar meu cadastro →'}}
+$('entrar').onclick=entrar;$('codigo').addEventListener('keydown',e=>{if(e.key==='Enter')entrar()});$('sair').onclick=()=>{ $('dashboard').style.display='none';$('login').style.display='block';$('codigo').value='';$('message').style.display='none';$('enderecoAprovado').style.display='none';window.scrollTo({top:0,behavior:'smooth'})};
 </script>
 </body></html>
