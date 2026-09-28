@@ -286,4 +286,23 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   });
 })();
 </script>
+
+<!-- EUROCOMPRA-CLEAN-OLD-SEARCH-EMBED -->
+<script>
+(function(){
+  function limparBuscadorAntigo(){
+    document.querySelectorAll('iframe').forEach(function(el){el.remove();});
+    document.querySelectorAll('a,button').forEach(function(el){
+      var t=(el.textContent||'').toLowerCase().replace(/\s+/g,' ').trim();
+      if(t.includes('abrir buscador em página completa') || t.includes('abrir buscador em pagina completa')){
+        var box=el.closest('.lojas-search,.lojas-lista-aberta,section,div');
+        if(box && box !== document.body && box.querySelector && box.querySelector('iframe')) box.remove();
+        else el.remove();
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',limparBuscadorAntigo); else limparBuscadorAntigo();
+  new MutationObserver(function(){limparBuscadorAntigo();}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
