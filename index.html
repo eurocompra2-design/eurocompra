@@ -306,4 +306,27 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   new MutationObserver(function(){limparBuscadorAntigo();}).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+<!-- EUROCOMPRA-REMOVE-BUSCADOR-BRASIL -->
+<script>
+(function(){
+  function removerBlocoConsultaBrasil(){
+    var alvo=null;
+    document.querySelectorAll('h1,h2,h3,h4,p,span,div').forEach(function(el){
+      var t=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      if(t.indexOf('seu produto pode ser enviado para o brasil?')===0 || t.indexOf('consulte antes de comprar')===0){
+        alvo=el;
+      }
+    });
+    if(alvo){
+      var bloco=alvo.closest('section')||alvo.closest('div');
+      if(bloco && bloco.id!=='servicos') bloco.remove();
+    }
+  }
+  function iniciar(){
+    removerBlocoConsultaBrasil();
+    new MutationObserver(function(){removerBlocoConsultaBrasil();}).observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
+})();
+</script>
 </body></html>
