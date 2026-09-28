@@ -250,7 +250,7 @@ export default {
         if(await hashSenha(senha,acesso.salt)!==acesso.senha_hash) return json({ok:false,message:"Código ou senha incorretos."},401);
         const cliente=await env.DB.prepare("SELECT codigo,nome,email,whatsapp,servico,produto,status,criado_em,atualizado_em FROM clientes WHERE codigo = ?").bind(codigo).first();
         if(!cliente) return json({ok:false,message:"Cadastro não encontrado."},404);
-        return json({ok:true,cliente,message:"Acesso autorizado."});
+        return json({ok:true,cliente,endereco: cliente.status === "Aprovado" ? enderecoEuroCompra() : null,message:"Acesso autorizado."});
       } catch(erro) { console.error("Erro no acesso:",erro); return json({ok:false,message:"Não foi possível entrar."},500); }
     }
 
@@ -267,7 +267,7 @@ export default {
           const r = await env.DB.prepare("SELECT * FROM pedidos WHERE codigo_cliente = ? OR cliente_codigo = ? ORDER BY id DESC LIMIT 100").bind(codigo,codigo).all();
           pedidos = r.results || [];
         } catch (_) {}
-        return json({ok:true,cliente,pedidos,message:"Acesso autorizado."});
+        return json({ok:true,cliente,pedidos,endereco: cliente.status === "Aprovado" ? enderecoEuroCompra() : null,message:"Acesso autorizado."});
       } catch (erro) {
         console.error("Erro no acesso por código:",erro);
         return json({ok:false,message:"Não foi possível acessar o cadastro."},500);
