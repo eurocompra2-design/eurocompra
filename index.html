@@ -211,8 +211,10 @@ const lojas={Moda:['Zara','H&M','C&A','Primark','Mango','Uniqlo'],Eletrônicos:[
 #accessClienteArea h3{margin-top:0;color:#06245c}
 .access-pedido{padding:12px;margin-top:10px;border-radius:10px;background:#fff;border:1px solid #e2e7f0}
 </style>
-<script id="eurocompra-acesso-codigo-only">(()=>{
+<script id="eurocompra-acesso-codigo-only">
+(()=>{
 const API='https://eurocompra-api.eurocompra2.workers.dev';
+function esc(v){return String(v??'').replace(/[&<>\\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[m]));}
 function init(){
  const sec=document.getElementById('acessoCliente');
  const code=document.getElementById('accessCodigo');
@@ -226,24 +228,39 @@ function init(){
  const p=sec.querySelector('.form-header p'); if(p) p.textContent='Digite somente o código do cliente para acessar seu cadastro e acompanhar seus pedidos.';
  sec.appendChild(area);
  const msg=(t,ok=false)=>{if(oldMsg){oldMsg.textContent=t;oldMsg.style.display='block';oldMsg.style.background=ok?'#eaf8f0':'#fff4e5';oldMsg.style.color=ok?'#16804b':'#9a5b00'}};
+ const valor=(o,keys,def='—')=>{for(const k of keys){if(o&&o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!=='')return o[k]}return def};
+ const renderPedidos=(pedidos)=>{
+   if(!pedidos.length) return '<div class="access-pedido"><strong>📦 Nenhum pedido registrado ainda.</strong><br><span style="color:#667085">Quando uma compra for registrada para este código, ela aparecerá aqui.</span></div>';
+   return pedidos.map((p,i)=>'<div class="access-pedido"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>📦 '+esc(valor(p,['numero','numero_pedido','pedido_id','id'],'Pedido '+(i+1)))+'</strong><span class="status" style="display:inline-block;padding:5px 9px;border-radius:999px;background:#eaf1ff;color:#063b9e;font-size:12px;font-weight:800">'+esc(valor(p,['status','situacao'],'Em andamento'))+'</span></div><div class="details" style="margin-top:10px"><div class="detail"><small>Produto</small><strong>'+esc(valor(p,['produto','produto_nome','descricao','item']))+'</strong></div><div class="detail"><small>Loja</small><strong>'+esc(valor(p,['loja','loja_nome']))+'</strong></div><div class="detail"><small>Valor</small><strong>'+esc(valor(p,['valor','total','valor_total','preco']))+'</strong></div><div class="detail"><small>Data</small><strong>'+esc(valor(p,['data','data_compra','criado_em']))+'</strong></div><div class="detail"><small>Rastreamento</small><strong>'+esc(valor(p,['rastreamento','tracking','codigo_rastreio','tracking_code'],'Ainda não informado'))+'</strong></div><div class="detail"><small>Destino</small><strong>'+esc(valor(p,['destino','endereco_entrega'],'—'))+'</strong></div></div></div>').join('');
+ };
  btn.onclick=async()=>{
    const codigo=code.value.trim().toUpperCase();
    if(!/^EC-\d{8}-[A-Z0-9]{6}$/.test(codigo)){msg('Informe um código de cliente válido.');return;}
    btn.disabled=true; btn.textContent='Consultando...';
    try{
      const r=await fetch(API+'/api/acesso/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});
-     const d=await r.json();
+     const d=await r.json().catch(()=>({}));
      if(!r.ok||!d.ok) throw new Error(d.message||'Código não encontrado.');
      const c=d.cliente||{}; const pedidos=Array.isArray(d.pedidos)?d.pedidos:[];
+     const aprovado=String(c.status||'').toLowerCase()==='aprovado';
+     const endereco=d.endereco||null;
      area.style.display='block';
-     area.innerHTML='<h3>Olá, '+String(c.nome||'Cliente').replace(/[<>]/g,'')+' 👋</h3><p><strong>Código:</strong> '+String(c.codigo||codigo).replace(/[<>]/g,'')+'</p><p><strong>Status:</strong> '+String(c.status||'Cadastro ativo').replace(/[<>]/g,'')+'</p><h4>📦 Pedidos e compras</h4>'+ (pedidos.length?pedidos.map(p=>'<div class="access-pedido"><strong>'+String(p.numero||p.id||'Pedido').replace(/[<>]/g,'')+'</strong><br>'+String(p.status||'Em andamento').replace(/[<>]/g,'')+'</div>').join(''):'<p>Nenhum pedido registrado para este cliente.</p>');
+     if(login) login.style.display='none';
+     const enderecoHtml=aprovado&&endereco?'<div class="access-endereco" style="margin-top:18px;padding:18px;border:1px solid #cfe3ff;border-radius:14px;background:#eef6ff"><h4 style="margin:0 0 8px;color:#06245c">📦 Cadastro aceito — endereço para suas compras</h4><div style="white-space:pre-line">'+esc(endereco.texto||'')+'</div><div style="margin-top:8px"><strong>Referência: '+esc(c.codigo||codigo)+'</strong></div><button id="copiarEnderecoAcesso" type="button" class="btn primary" style="margin-top:12px">📋 Copiar endereço</button></div>':'<div style="margin-top:16px;padding:14px;border-radius:12px;background:#f7f9fc"><strong>⏳ Cadastro aguardando aprovação.</strong><br><span style="color:#667085">O endereço para compras aparecerá aqui depois que o cadastro for aprovado.</span></div>';
+     area.innerHTML='<div style="padding:20px;border:1px solid #e2e7f0;border-radius:16px;background:#fff"><h3 style="margin-top:0;color:#06245c">Olá, '+esc(c.nome||'Cliente')+' 👋</h3><p><strong>Código:</strong> '+esc(c.codigo||codigo)+'</p><p><strong>Status:</strong> '+esc(c.status||'Cadastro ativo')+'</p>'+enderecoHtml+'<h4 style="margin-top:22px">🛒 Todos os pedidos e compras</h4><div>'+renderPedidos(pedidos)+'</div><button id="continuarCompras" type="button" class="btn gold" style="margin-top:18px">🛍️ Continuar minhas compras</button></div>';
+     document.getElementById('copiarEnderecoAcesso')?.addEventListener('click',async()=>{
+       try{await navigator.clipboard.writeText((endereco?.texto||'')+'\nReferência: '+(c.codigo||codigo));document.getElementById('copiarEnderecoAcesso').textContent='✅ Endereço copiado';}catch(_){window.prompt('Copie o endereço:',(endereco?.texto||'')+'\nReferência: '+(c.codigo||codigo));}
+     });
+     document.getElementById('continuarCompras')?.addEventListener('click',()=>{document.getElementById('acessoCliente').style.display='none';document.getElementById('lojas')?.scrollIntoView({behavior:'smooth',block:'start'});});
      msg('Acesso autorizado com sucesso.',true);
-   }catch(e){area.style.display='none';msg(e.message||'Não foi possível acessar o cadastro.');}
+     sec.scrollIntoView({behavior:'smooth',block:'start'});
+   }catch(e){area.style.display='none';if(login) login.style.display='block';msg(e.message||'Não foi possível acessar o cadastro.');}
    finally{btn.disabled=false;btn.textContent='🔐 Acessar meu cadastro';}
  };
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-})();</script>
+})();
+</script>
 <script src="chocolates-visivel.js"></script><script src="categorias-profissionais.js?v=20260816"></script><script src="horario-whatsapp.js?v=20260816"></script><script id="eurocompra-clean-functions">
 (()=>{const top=document.createElement('button');top.type='button';top.id='ecTop';top.textContent='↑';top.setAttribute('aria-label','Voltar ao topo');top.style.cssText='position:fixed;right:16px;bottom:16px;width:44px;height:44px;border:0;border-radius:50%;background:#0b46b8;color:#fff;font-size:20px;font-weight:800;box-shadow:0 10px 24px rgba(6,59,158,.22);cursor:pointer;display:none;z-index:30';document.body.appendChild(top);const toggle=()=>top.style.display=window.scrollY>500?'grid':'none';window.addEventListener('scroll',toggle,{passive:true});top.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));})();
 </script><script>
