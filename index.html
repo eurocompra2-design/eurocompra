@@ -97,6 +97,16 @@ const lojas={Moda:['Zara','H&M','C&A','Primark','Mango','Uniqlo'],Eletrônicos:[
     area.required = brazil;
     area.classList.toggle('optional', !brazil);
     area.placeholder = brazil ? 'DDD' : 'Código/região (opcional)';
+    if (code === '32') {
+      area.value = '';
+      area.style.display = 'none';
+      number.placeholder = 'Ex.: 0470 12 34 56';
+      number.maxLength = 12;
+    } else {
+      area.style.display = '';
+      number.placeholder = 'Número';
+      number.maxLength = 12;
+    }
     countryName.value = name;
     help.innerHTML = `🌍 <strong>${name}</strong> +${code}. ${brazil ? 'Informe o DDD e depois o número.' : 'Informe o código regional somente se o país utilizar um.'}`;
     let status = document.getElementById('phoneStatus');
@@ -129,8 +139,16 @@ const lojas={Moda:['Zara','H&M','C&A','Primark','Mango','Uniqlo'],Eletrônicos:[
     event.stopImmediatePropagation();
 
     const code = digits(country.value);
-    const areaDigits = digits(area.value);
-    const numberDigits = digits(number.value);
+    let areaDigits = digits(area.value);
+    let numberDigits = digits(number.value);
+
+    // Bélgica: o cliente pode informar o número completo, por exemplo 0470 12 34 56.
+    // O zero inicial é removido apenas para montar o formato internacional +32.
+    if (code === '32') {
+      areaDigits = '';
+      numberDigits = numberDigits.replace(/^0/, '');
+    }
+
     const fullWhatsapp = `+${code}${areaDigits}${numberDigits}`;
 
     if (code === '55' && areaDigits.length !== 2) {
